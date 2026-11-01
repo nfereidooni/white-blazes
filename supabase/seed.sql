@@ -27,9 +27,10 @@ insert into auth.identities (
   'email', now(), now(), now()
 );
 
--- 2. Their profile. (From stage 2 on, a trigger creates this automatically.)
-insert into public.profiles (id, display_name)
-values ('11111111-1111-1111-1111-111111111111', 'Demo Hiker');
+-- 2. The on_auth_user_created trigger has already made the profile from the
+-- email address. Give it a nicer name.
+update public.profiles set display_name = 'Demo Hiker'
+where id = '11111111-1111-1111-1111-111111111111';
 
 -- 3. Hikes, plus the main-trail km each covered.
 -- A CTE lets us insert a hike and use its generated id in the same statement.
