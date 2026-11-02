@@ -78,6 +78,9 @@ export default async function Home() {
             <Link href="/hikes/new" className="button-light">
               Log a hike
             </Link>
+            <Link href="/hikes/import" className="button-outline-light">
+              Import GPX
+            </Link>
           </div>
         </div>
       </header>
@@ -135,7 +138,10 @@ export default async function Home() {
             <section className="card" aria-labelledby="hikes-h">
               <div className="card-head">
                 <h2 id="hikes-h">Your hikes</h2>
-                <Link href="/hikes/new">Log a hike</Link>
+                <span className="head-links">
+                  <Link href="/hikes/new">Log a hike</Link>
+                  <Link href="/hikes/import">Import GPX</Link>
+                </span>
               </div>
               {unplaced > 0 && (
                 <p className="hint">
