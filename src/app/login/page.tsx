@@ -26,7 +26,7 @@ export default async function LoginPage({
           </p>
         )}
         <p className="lede">
-          White Blazes tracks your hikes on the Bruce Trail, Niagara to Tobermory. Log where you&rsquo;ve
+          White Blazes tracks your hikes along the Bruce Trail, from Niagara to Tobermory. Log where you&rsquo;ve
           hiked and see how much of the trail you&rsquo;ve covered, section by section.
         </p>
         <h1>Sign in</h1>

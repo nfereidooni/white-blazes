@@ -9,7 +9,7 @@ const mono = IBM_Plex_Mono({ variable: "--font-mono", subsets: ["latin"], weight
 
 export const metadata: Metadata = {
   title: "White Blazes",
-  description: "Track your Bruce Trail hikes, Niagara to Tobermory.",
+  description: "White Blazes tracks your hikes along the Bruce Trail, from Niagara to Tobermory.",
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {

@@ -1,6 +1,6 @@
 # White Blazes
 
-A tracker for hiking the Bruce Trail, Niagara to Tobermory. Log your hikes, see which stretches of the white-blazed main trail you've covered, and follow your progress toward each club's end to end badge.
+A tracker for hiking the Bruce Trail, from Niagara to Tobermory. Log your hikes, see which stretches of the white-blazed main trail you've covered, and follow your progress toward each club's end to end badge.
 
 Badges are ordered through each Bruce Trail club. This app only tracks progress.
 

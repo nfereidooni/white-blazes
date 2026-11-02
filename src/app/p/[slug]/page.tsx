@@ -43,7 +43,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const { doneKm } = totals(data.sections);
   return {
     title: `${data.name} on the Bruce Trail · White Blazes`,
-    description: `${data.name} has hiked ${doneKm.toFixed(1)} km of the Bruce Trail, Niagara to Tobermory.`,
+    description: `${data.name} has hiked ${doneKm.toFixed(1)} km of the Bruce Trail, from Niagara to Tobermory.`,
     robots: { index: false },
   };
 }
