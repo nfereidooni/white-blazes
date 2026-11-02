@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { Logo } from "@/components/Logo";
+import { Footer } from "@/components/Footer";
 import { Ribbon, SectionList, totals, type SectionRow } from "@/components/TrailProgress";
 
 type Row = { display_name: string | null; section_id: number; section_name: string; length_km: number; done_km: number };
@@ -87,6 +88,7 @@ export default async function SharedProgressPage({ params }: { params: Promise<{
           </section>
         </div>
       </main>
+      <Footer />
     </div>
   );
 }

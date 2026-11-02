@@ -147,13 +147,23 @@ h1, h2 { font-family: var(--font-serif), Georgia, serif; font-weight: 400; margi
 .more summary::after { content: ""; width: 8px; height: 8px; border-right: 2px solid var(--muted); border-bottom: 2px solid var(--muted); transform: rotate(45deg); margin-top: -4px; transition: transform 0.15s; }
 .more[open] summary::after { transform: rotate(225deg); margin-top: 4px; }
 .more-body { padding: 4px 16px 16px; display: flex; flex-direction: column; gap: 14px; }
-.segmented { display: inline-flex; padding: 4px; gap: 4px; border-radius: 12px; background: var(--ground); border: 1px solid var(--line); align-self: flex-start; }
+.segmented { display: inline-flex; flex-wrap: wrap; padding: 4px; gap: 4px; border-radius: 12px; background: var(--ground); border: 1px solid var(--line); align-self: flex-start; }
 .segmented label { position: relative; display: inline-flex; align-items: center; min-height: 40px; padding: 0 16px; border-radius: 9px; font-size: 15px; font-weight: 600; color: var(--muted); cursor: pointer; }
 .segmented input { position: absolute; opacity: 0; pointer-events: none; }
 .segmented label:has(input:checked) { background: var(--paper); color: var(--ink); box-shadow: 0 1px 2px rgba(19, 37, 26, 0.15); }
 .segmented label:has(input:focus-visible) { outline: 2px solid var(--forest-600); outline-offset: 2px; }
 .soon-note { margin: 0; font-size: 13px; color: var(--muted); }
 .tag-needs { color: var(--amber); background: #f7ecd9; }
+
+/* Settings and footer */
+.choice-top { align-items: flex-start; padding: 6px 0; }
+.choice-top input { margin-top: 3px; flex: none; }
+.hint.block { display: block; margin-top: 2px; }
+.saved { margin: 0; color: var(--forest-700); font-weight: 600; }
+.account-name { color: var(--sage); text-decoration: underline; text-underline-offset: 3px; font-weight: 500; }
+.account-name:hover { color: var(--cream); }
+.site-footer { max-width: 1180px; margin: 0 auto; padding: 0 32px 40px; font-size: 13px; color: var(--muted); }
+.site-footer a { font-weight: 500; color: var(--muted); }
 
 @media (max-width: 600px) {
   .bar, .hero-body, .content { padding-left: 16px; padding-right: 16px; }

@@ -13,20 +13,21 @@ export type HikeValues = {
   walked_km: number | null;
   is_club_hike: boolean;
   trail: "main" | "side";
-  km_from: number | null;
-  km_to: number | null;
 };
 
-// Ways to say where a hike went. They all end up as the same km range in
-// hike_segments. Map, coordinates and club series parts need the trail line
-// (Stage 4), so only these two work for now.
-const PLACEMENTS = [
+// Ways to say where a hike went. They all end up as km ranges in
+// hike_segments. The map and club series parts are still to come.
+const BASE_PLACEMENTS = [
   { value: "skip", label: "Not yet" },
+  { value: "coords", label: "Coordinates" },
   { value: "km", label: "Km range" },
 ];
 
 const HINTS: Record<string, string> = {
+  keep: "Leave this hike where it is on the trail.",
   skip: "Saved as “needs placing”. It counts toward section km once you place it.",
+  coords:
+    "Paste where you started and finished. In Google or Apple Maps, press and hold a spot to copy its coordinates.",
   km: "Km from the south end of the section, as in the guidebook.",
 };
 
@@ -35,18 +36,22 @@ export function HikeForm({
   sections,
   initial,
   showPlacement,
+  currentPlacement,
   submitLabel,
 }: {
   action: (prev: HikeFormState, form: FormData) => Promise<HikeFormState>;
   sections: Section[];
   initial?: Partial<HikeValues>;
   showPlacement: boolean;
+  /** e.g. "Iroquoia km 15.1 to 27.6". Set when editing a hike that's already placed. */
+  currentPlacement?: string;
   submitLabel: string;
 }) {
   const [state, formAction, pending] = useActionState(action, {});
   const v = initial ?? {};
   const [trail, setTrail] = useState<"main" | "side">(v.trail ?? "main");
-  const [placement, setPlacement] = useState<string>(v.km_from != null ? "km" : "skip");
+  const placements = currentPlacement ? [{ value: "keep", label: "Keep as is" }, ...BASE_PLACEMENTS] : BASE_PLACEMENTS;
+  const [placement, setPlacement] = useState<string>(currentPlacement ? "keep" : "skip");
   const hasDetails = v.walked_km != null || v.is_club_hike || v.trail === "side";
 
   return (
@@ -104,7 +109,7 @@ export function HikeForm({
         <fieldset className="field placement">
           <legend>Where on the trail?</legend>
           <div className="segmented">
-            {PLACEMENTS.map((p) => (
+            {placements.map((p) => (
               <label key={p.value}>
                 <input
                   type="radio"
@@ -117,20 +122,34 @@ export function HikeForm({
               </label>
             ))}
           </div>
-          <p className="hint">{HINTS[placement]}</p>
+          <p className="hint">
+            {placement === "keep" && currentPlacement ? `Currently ${currentPlacement}.` : HINTS[placement]}
+          </p>
+          {placement === "coords" && (
+            <div className="field-row keep">
+              <div className="field">
+                <label htmlFor="coords_start">Start</label>
+                <input id="coords_start" name="coords_start" required inputMode="decimal" placeholder="43.2557, -79.8711" autoComplete="off" />
+              </div>
+              <div className="field">
+                <label htmlFor="coords_end">End</label>
+                <input id="coords_end" name="coords_end" required inputMode="decimal" placeholder="43.2401, -79.9512" autoComplete="off" />
+              </div>
+            </div>
+          )}
           {placement === "km" && (
             <div className="field-row keep">
               <div className="field">
                 <label htmlFor="km_from">From km</label>
-                <input id="km_from" name="km_from" type="number" min="0" step="0.1" inputMode="decimal" required defaultValue={v.km_from ?? ""} />
+                <input id="km_from" name="km_from" type="number" min="0" step="0.1" inputMode="decimal" required />
               </div>
               <div className="field">
                 <label htmlFor="km_to">To km</label>
-                <input id="km_to" name="km_to" type="number" min="0" step="0.1" inputMode="decimal" required defaultValue={v.km_to ?? ""} />
+                <input id="km_to" name="km_to" type="number" min="0" step="0.1" inputMode="decimal" required />
               </div>
             </div>
           )}
-          <p className="soon-note">Coming soon: pick on the map, paste coordinates, or choose a club series part.</p>
+          <p className="soon-note">Coming soon: pick on the map, or choose a club series part.</p>
         </fieldset>
       )}
 

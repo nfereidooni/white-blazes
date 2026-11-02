@@ -22,15 +22,22 @@ export default async function EditHikePage({ params }: { params: Promise<{ id: s
       .eq("id", id)
       .maybeSingle(),
     supabase.from("sections").select("id, name, length_km").order("id"),
-    supabase.from("hike_segments").select("km").eq("hike_id", id),
+    supabase.from("hike_segments").select("section_id, km").eq("hike_id", id).order("section_id"),
   ]);
   if (!hike) notFound();
 
   // Ranges from a GPS track come from the track itself, so only hand-entered
-  // hikes get the km fields. A manual hike has at most one range.
+  // hikes get the placement step.
   const canEditRange = hike.source === "manual";
-  const range = segments?.[0]?.km as string | undefined; // e.g. "[15.1,27.6)"
-  const [km_from, km_to] = range ? range.slice(1, -1).split(",").map(Number) : [null, null];
+
+  // Describe the current placement, e.g. "Iroquoia km 15.1 to 27.6".
+  const sectionName = new Map((sections ?? []).map((s) => [s.id as number, s.name as string]));
+  const currentPlacement = (segments ?? [])
+    .map((g) => {
+      const [from, to] = String(g.km).slice(1, -1).split(",").map(Number); // "[15.1,27.6)"
+      return `${sectionName.get(g.section_id)} km ${from.toFixed(1)} to ${to.toFixed(1)}`;
+    })
+    .join(", then ");
 
   return (
     <PageShell title="Edit hike">
@@ -43,8 +50,9 @@ export default async function EditHikePage({ params }: { params: Promise<{ id: s
       <HikeForm
         action={updateHike.bind(null, id, canEditRange)}
         sections={sections ?? []}
-        initial={{ ...hike, km_from, km_to }}
+        initial={hike}
         showPlacement={canEditRange}
+        currentPlacement={currentPlacement || undefined}
         submitLabel="Save changes"
       />
       <form action={deleteHike.bind(null, id)} className="danger-zone">

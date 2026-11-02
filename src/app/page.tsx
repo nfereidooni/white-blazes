@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { Logo } from "@/components/Logo";
 import { Ribbon, SectionList, totals, type SectionRow } from "@/components/TrailProgress";
 import { setSharing } from "./share-actions";
+import { Footer } from "@/components/Footer";
 
 type Section = { id: number; slug: string; name: string; length_km: number; club_badge_url: string };
 type Progress = { section_id: number; done_km: number };
@@ -58,7 +59,9 @@ export default async function Home() {
         <div className="bar">
           <Logo />
           <form action="/auth/signout" method="post" className="account">
-            <span>{name}</span>
+            <Link href="/settings" className="account-name">
+              {name}
+            </Link>
             <button type="submit">Sign out</button>
           </form>
         </div>
@@ -161,6 +164,7 @@ export default async function Home() {
           </div>
         </div>
       </main>
+      <Footer />
     </div>
   );
 }

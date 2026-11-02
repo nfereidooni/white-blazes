@@ -6,17 +6,20 @@ import { createClient } from "@/lib/supabase/server";
 
 export type HikeFormState = { error?: string };
 
-type Parsed = {
-  hike: {
-    name: string;
-    hiked_on: string;
-    section_id: number | null;
-    walked_km: number | null;
-    is_club_hike: boolean;
-    trail: "main" | "side";
-  };
-  range: [number, number] | null;
+type Supabase = Awaited<ReturnType<typeof createClient>>;
+type Segment = { section_id: number; from: number; to: number };
+
+type HikeFields = {
+  name: string;
+  hiked_on: string;
+  section_id: number;
+  walked_km: number | null;
+  is_club_hike: boolean;
+  trail: "main" | "side";
 };
+
+// How far a pasted point may be from the trail and still count.
+const MAX_OFF_TRAIL_M = 500;
 
 const num = (v: FormDataEntryValue | null) => {
   const s = String(v ?? "").trim();
@@ -25,64 +28,126 @@ const num = (v: FormDataEntryValue | null) => {
   return Number.isFinite(n) ? n : NaN;
 };
 
+/** "43.2557, -79.8711" (the format Google and Apple Maps copy) → [lat, lon]. */
+function parseLatLon(raw: FormDataEntryValue | null): [number, number] | null {
+  const m = String(raw ?? "")
+    .trim()
+    .match(/^(-?\d+(?:\.\d+)?)\s*[,\s]\s*(-?\d+(?:\.\d+)?)$/);
+  if (!m) return null;
+  const lat = Number(m[1]);
+  const lon = Number(m[2]);
+  if (Math.abs(lat) > 90 || Math.abs(lon) > 180) return null;
+  return [lat, lon];
+}
+
 /**
  * Check the form before it reaches the database. The database checks again
  * (constraints, the segment trigger, RLS), but catching mistakes here gives
  * people a readable message instead of a Postgres error.
  */
-function parse(form: FormData): Parsed | { error: string } {
+function parseHike(form: FormData): HikeFields | { error: string } {
   const name = String(form.get("name") ?? "").trim();
   const hiked_on = String(form.get("hiked_on") ?? "");
   const sectionRaw = String(form.get("section_id") ?? "");
   const walked = num(form.get("walked_km"));
-  // Only read the km fields when "Km range" is the chosen placement.
-  const useKm = form.get("placement") === "km";
-  const from = useKm ? num(form.get("km_from")) : null;
-  const to = useKm ? num(form.get("km_to")) : null;
-  const trail = form.get("trail") === "side" ? "side" : "main";
 
   if (!name) return { error: "Give the hike a name." };
   if (!/^\d{4}-\d{2}-\d{2}$/.test(hiked_on)) return { error: "Pick the date you hiked." };
   if (!sectionRaw) return { error: "Pick the section you hiked in." };
   if (Number.isNaN(walked) || (walked !== null && walked < 0)) return { error: "Distance walked should be a number of km." };
 
-  let range: [number, number] | null = null;
-  if (from !== null || to !== null) {
-    if (from === null || to === null || Number.isNaN(from) || Number.isNaN(to)) {
-      return { error: "Fill in both ends of the km range, or leave both empty." };
-    }
-    if (from < 0 || to <= from) return { error: "The km range should go from a smaller number to a bigger one." };
-    if (trail === "side") return { error: "Km ranges are for the main trail. Clear them for a side trail hike." };
-    range = [from, to];
-  }
-
   return {
-    hike: {
-      name,
-      hiked_on,
-      section_id: sectionRaw ? Number(sectionRaw) : null,
-      walked_km: walked,
-      is_club_hike: form.get("is_club_hike") === "on",
-      trail,
-    },
-    range,
+    name,
+    hiked_on,
+    section_id: Number(sectionRaw),
+    walked_km: walked,
+    is_club_hike: form.get("is_club_hike") === "on",
+    trail: form.get("trail") === "side" ? "side" : "main",
   };
 }
 
-async function saveRange(
-  supabase: Awaited<ReturnType<typeof createClient>>,
-  hikeId: string,
-  sectionId: number | null,
-  range: [number, number] | null,
-) {
-  // Replace whatever range the hike had. RLS only lets you touch segments
-  // of your own hikes, so these can't reach anyone else's.
+/**
+ * Work out which stretches of trail the hike covered, from whichever
+ * placement option was picked. Returns:
+ *   "keep"     leave the hike's current segments alone
+ *   Segment[]  replace them (an empty list means "not placed")
+ */
+async function resolvePlacement(
+  supabase: Supabase,
+  form: FormData,
+  hike: HikeFields,
+): Promise<"keep" | Segment[] | { error: string }> {
+  const placement = String(form.get("placement") ?? "skip");
+  if (hike.trail === "side") return []; // side trails never count toward main trail km
+  if (placement === "keep") return "keep";
+
+  if (placement === "km") {
+    const from = num(form.get("km_from"));
+    const to = num(form.get("km_to"));
+    if (from === null || to === null || Number.isNaN(from) || Number.isNaN(to)) {
+      return { error: "Fill in both ends of the km range." };
+    }
+    if (from < 0 || to <= from) return { error: "The km range should go from a smaller number to a bigger one." };
+    return [{ section_id: hike.section_id, from, to }];
+  }
+
+  if (placement === "coords") {
+    const start = parseLatLon(form.get("coords_start"));
+    const end = parseLatLon(form.get("coords_end"));
+    if (!start || !end) {
+      return { error: "Paste each point as latitude, longitude, for example 43.2557, -79.8711." };
+    }
+
+    // Ask Postgres where each point falls on the trail (PostGIS does the maths).
+    const [a, b] = await Promise.all(
+      [start, end].map((p) => supabase.rpc("locate_on_trail", { lat: p[0], lon: p[1] }).single()),
+    );
+    if (a.error || b.error || !a.data || !b.data) return { error: "Couldn't find those points on the trail." };
+    type Loc = { section_id: number; km: number; distance_m: number };
+    let [p, q] = [a.data as Loc, b.data as Loc];
+
+    for (const [label, loc] of [["start", p], ["end", q]] as const) {
+      if (Number(loc.distance_m) > MAX_OFF_TRAIL_M) {
+        return {
+          error: `The ${label} point is ${(Number(loc.distance_m) / 1000).toFixed(1)} km from the Bruce Trail. Check that it's on the main trail.`,
+        };
+      }
+    }
+
+    // Hiked north to south? Same stretch either way, so put the southern point first.
+    if (q.section_id < p.section_id || (q.section_id === p.section_id && Number(q.km) < Number(p.km))) [p, q] = [q, p];
+    if (p.section_id === q.section_id && Number(q.km) - Number(p.km) < 0.05) {
+      return { error: "The start and end points are at the same spot on the trail." };
+    }
+
+    // A hike can cross a section boundary: split it at each boundary.
+    const { data: sections } = await supabase.from("sections").select("id, length_km").order("id");
+    const len = new Map((sections ?? []).map((s) => [s.id as number, Number(s.length_km)]));
+    const segs: Segment[] = [];
+    for (let id = p.section_id; id <= q.section_id; id++) {
+      segs.push({
+        section_id: id,
+        from: id === p.section_id ? Number(p.km) : 0,
+        to: id === q.section_id ? Number(q.km) : (len.get(id) ?? 0),
+      });
+    }
+    // The section dropdown follows where the hike actually started.
+    hike.section_id = p.section_id;
+    return segs;
+  }
+
+  return []; // "Not yet"
+}
+
+async function saveSegments(supabase: Supabase, hikeId: string, segs: Segment[]) {
+  // Replace whatever the hike had. RLS only lets you touch segments of your
+  // own hikes, so this can't reach anyone else's.
   const del = await supabase.from("hike_segments").delete().eq("hike_id", hikeId);
   if (del.error) return del.error.message;
-  if (!range || sectionId === null) return null;
+  if (!segs.length) return null;
   const ins = await supabase
     .from("hike_segments")
-    .insert({ hike_id: hikeId, section_id: sectionId, km: `[${range[0]},${range[1]})` });
+    .insert(segs.map((s) => ({ hike_id: hikeId, section_id: s.section_id, km: `[${s.from},${s.to})` })));
   return ins.error ? friendly(ins.error.message) : null;
 }
 
@@ -92,8 +157,8 @@ const friendly = (msg: string) =>
     : msg;
 
 export async function createHike(_prev: HikeFormState, form: FormData): Promise<HikeFormState> {
-  const parsed = parse(form);
-  if ("error" in parsed) return parsed;
+  const hike = parseHike(form);
+  if ("error" in hike) return hike;
 
   const supabase = await createClient();
   const {
@@ -101,39 +166,47 @@ export async function createHike(_prev: HikeFormState, form: FormData): Promise<
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
+  const placement = await resolvePlacement(supabase, form, hike);
+  if (!Array.isArray(placement) && placement !== "keep") return placement;
+
   // We still send user_id. RLS's `with check` rejects the insert if it's
   // anyone but the signed-in person.
   const { data, error } = await supabase
     .from("hikes")
-    .insert({ ...parsed.hike, user_id: user.id, source: "manual" })
+    .insert({ ...hike, user_id: user.id, source: "manual" })
     .select("id")
     .single();
   if (error) return { error: error.message };
 
-  const rangeError = await saveRange(supabase, data.id, parsed.hike.section_id, parsed.range);
-  if (rangeError) {
-    // Two separate requests aren't one transaction, so undo the hike by hand.
-    await supabase.from("hikes").delete().eq("id", data.id);
-    return { error: rangeError };
+  if (Array.isArray(placement)) {
+    const segError = await saveSegments(supabase, data.id, placement);
+    if (segError) {
+      // Two separate requests aren't one transaction, so undo the hike by hand.
+      await supabase.from("hikes").delete().eq("id", data.id);
+      return { error: segError };
+    }
   }
 
   revalidatePath("/");
   redirect("/");
 }
 
-export async function updateHike(id: string, canEditRange: boolean, _prev: HikeFormState, form: FormData): Promise<HikeFormState> {
-  const parsed = parse(form);
-  if ("error" in parsed) return parsed;
+export async function updateHike(id: string, canPlace: boolean, _prev: HikeFormState, form: FormData): Promise<HikeFormState> {
+  const hike = parseHike(form);
+  if ("error" in hike) return hike;
 
   const supabase = await createClient();
-  const { data, error } = await supabase.from("hikes").update(parsed.hike).eq("id", id).select("id");
+  const placement = canPlace ? await resolvePlacement(supabase, form, hike) : "keep";
+  if (!Array.isArray(placement) && placement !== "keep") return placement;
+
+  const { data, error } = await supabase.from("hikes").update(hike).eq("id", id).select("id");
   if (error) return { error: error.message };
   // RLS skips rows you can't see without an error, so check something changed.
   if (!data?.length) return { error: "That hike wasn't found." };
 
-  if (canEditRange) {
-    const rangeError = await saveRange(supabase, id, parsed.hike.section_id, parsed.range);
-    if (rangeError) return { error: rangeError };
+  if (Array.isArray(placement)) {
+    const segError = await saveSegments(supabase, id, placement);
+    if (segError) return { error: segError };
   }
 
   revalidatePath("/");
