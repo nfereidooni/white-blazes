@@ -8,7 +8,7 @@ export default async function NewHikePage() {
   const { data: sections } = await supabase.from("sections").select("id, name, length_km").order("id");
 
   return (
-    <PageShell title="Log a hike">
+    <PageShell title="Log a hike" eyebrow="Hikes" tab="hikes">
       <HikeForm action={createHike} sections={sections ?? []} showPlacement submitLabel="Save hike" />
     </PageShell>
   );

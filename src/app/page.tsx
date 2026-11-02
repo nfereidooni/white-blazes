@@ -2,19 +2,25 @@ import Link from "next/link";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { Logo } from "@/components/Logo";
-import { Ribbon, SectionList, totals, type SectionRow } from "@/components/TrailProgress";
-import { setSharing } from "./share-actions";
-import { Footer } from "@/components/Footer";
-import { Avatar } from "@/components/Avatar";
 import { avatarUrl } from "@/lib/avatar";
+import { closestGap, parseMulti, parseRange, type Segment } from "@/lib/gaps";
+import { SiteHeader } from "@/components/SiteHeader";
+import { Footer } from "@/components/Footer";
+import { Ribbon, totals, type SectionRow } from "@/components/TrailProgress";
+import { BadgeRing } from "@/components/Badge";
+import { HikeCalendar, CalendarLegend } from "@/components/HikeCalendar";
+import { setSharing } from "./share-actions";
 
 type Section = { id: number; slug: string; name: string; length_km: number; club_badge_url: string };
-type Progress = { section_id: number; done_km: number };
+type Progress = { section_id: number; done_km: number; covered: string };
 type Hike = { id: string; hiked_on: string; name: string; walked_km: number | null; trail: "main" | "side"; section_id: number | null };
+type SegRow = { hike_id: string; section_id: number; km: string; hikes: { start_point: string | null; end_point: string | null } };
 
-const fmtDate = (iso: string) =>
-  new Date(`${iso}T12:00:00`).toLocaleDateString("en-CA", { month: "short", day: "numeric", year: "numeric" });
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+const short = (iso: string) => `${MONTHS[Number(iso.slice(5, 7)) - 1]} ${Number(iso.slice(8, 10))}`;
+const longMonth = (iso: string) =>
+  new Date(`${iso}T12:00:00`).toLocaleDateString("en-CA", { month: "long", year: "numeric" });
+const km1 = (n: number) => n.toFixed(1);
 
 export default async function Home() {
   const supabase = await createClient();
@@ -29,34 +35,68 @@ export default async function Home() {
 
   // Six queries in parallel. None of them says "where user_id = me":
   // Row Level Security adds that filter inside Postgres.
-  const [sectionsRes, progressRes, profileRes, hikesRes, placedRes, clubsRes] = await Promise.all([
+  const [sectionsRes, progressRes, profileRes, hikesRes, segRes, clubsRes] = await Promise.all([
     supabase.from("sections").select("id, slug, name, length_km, club_badge_url").order("id"),
-    supabase.from("section_progress").select("section_id, done_km"),
+    supabase.from("section_progress").select("section_id, done_km, covered"),
     supabase.from("profiles").select("display_name, share_enabled, share_slug, goal, avatar_path").single(),
     supabase.from("hikes").select("id, hiked_on, name, walked_km, trail, section_id").order("hiked_on", { ascending: false }),
-    supabase.from("hike_segments").select("hike_id"),
+    supabase.from("hike_segments").select("hike_id, section_id, km, hikes!inner(start_point, end_point)"),
     supabase.from("profile_clubs").select("section_id"),
   ]);
-  const homeClubs = new Set((clubsRes.data ?? []).map((r) => r.section_id as number));
 
-  const progress = new Map(((progressRes.data ?? []) as Progress[]).map((p) => [p.section_id, Number(p.done_km)]));
-  // Sections with any hikes filed in them get a link to their trail log.
-  const withHikes = new Set(((hikesRes.data ?? []) as Hike[]).map((h) => h.section_id));
-  const sections: SectionRow[] = ((sectionsRes.data ?? []) as Section[]).map((s) => ({
-    ...s,
-    length_km: Number(s.length_km),
-    done_km: progress.get(s.id) ?? 0,
-    logHref: (progress.get(s.id) ?? 0) > 0 || withHikes.has(s.id) ? `/log/${s.slug}` : undefined,
-    homeClub: homeClubs.has(s.id),
-  }));
+  const progress = new Map(((progressRes.data ?? []) as Progress[]).map((p) => [p.section_id, p]));
   const hikes = (hikesRes.data ?? []) as Hike[];
-  // A main-trail hike with no segments hasn't been placed yet, so it adds no km.
-  const placed = new Set((placedRes.data ?? []).map((r) => r.hike_id as string));
-  const unplaced = hikes.filter((hk) => hk.trail === "main" && !placed.has(hk.id)).length;
+  const segRows = (segRes.data ?? []) as unknown as SegRow[];
+  const homeClubs = new Set((clubsRes.data ?? []).map((r) => r.section_id as number));
+  const withHikes = new Set(hikes.map((h) => h.section_id));
+
+  const raw = (sectionsRes.data ?? []) as Section[];
+  const sections: (SectionRow & { slug: string; home: boolean })[] = raw.map((s) => {
+    const done = Number(progress.get(s.id)?.done_km ?? 0);
+    return {
+      ...s,
+      length_km: Number(s.length_km),
+      done_km: done,
+      home: homeClubs.has(s.id),
+      logHref: done > 0 || withHikes.has(s.id) ? `/log/${s.slug}` : undefined,
+    };
+  });
+  const { totalKm, doneKm, pct, started } = totals(sections);
+
+  // Km on the trail per hike: the sum of its placed stretches.
+  const segments: Segment[] = segRows.map((r) => {
+    const [from, to] = parseRange(r.km);
+    return { sectionId: r.section_id, from, to, startPoint: r.hikes.start_point, endPoint: r.hikes.end_point };
+  });
+  const trailKm = new Map<string, number>();
+  segRows.forEach((r, i) => trailKm.set(r.hike_id, (trailKm.get(r.hike_id) ?? 0) + segments[i].to - segments[i].from));
+  const placed = new Set(trailKm.keys());
+
+  // Calendar: km per day. Placed hikes count their trail km, others their walked distance.
+  const days = new Map<string, number>();
+  for (const h of hikes) {
+    const km = trailKm.get(h.id) ?? Number(h.walked_km ?? 0);
+    days.set(h.hiked_on, (days.get(h.hiked_on) ?? 0) + km);
+  }
+  const today = new Date().toLocaleDateString("en-CA", { timeZone: "America/Toronto" });
+
+  const gap = closestGap(
+    raw.map((s) => ({
+      id: s.id,
+      slug: s.slug,
+      name: s.name,
+      lengthKm: Number(s.length_km),
+      covered: parseMulti(progress.get(s.id)?.covered),
+      doneKm: Number(progress.get(s.id)?.done_km ?? 0),
+    })),
+    segments,
+  );
+
+  const unplaced = hikes.filter((h) => h.trail === "main" && !placed.has(h.id)).length;
+  const recent = hikes.slice(0, 5);
   const profile = profileRes.data;
   const name = profile?.display_name ?? user.email ?? "";
   const photo = await avatarUrl(supabase, profile?.avatar_path);
-  const { totalKm, doneKm, pct, started } = totals(sections);
 
   const h = await headers();
   const origin = `${h.get("x-forwarded-proto") ?? "http"}://${h.get("host")}`;
@@ -64,26 +104,20 @@ export default async function Home() {
 
   return (
     <div className="page">
-      <header className="hero">
-        <div className="bar">
-          <Logo />
-          <form action="/auth/signout" method="post" className="account">
-            <Link href="/settings" className="account-name">
-              <Avatar url={photo} name={name} size={30} />
-              {name}
-            </Link>
-            <button type="submit">Sign out</button>
-          </form>
-        </div>
+      <SiteHeader active="home" name={name} photo={photo} variant="tall">
         <div className="hero-body">
           <p className="eyebrow">Niagara to Tobermory</p>
-          <h1>
-            {doneKm.toFixed(1)}
-            <span> km</span>
-          </h1>
-          <p className="sub">
-            of {Math.round(totalKm)} km · <strong>{pct}% of the Bruce Trail</strong> · {started} of 9 sections started
-          </p>
+          <div className="hero-figure">
+            <h1>
+              {km1(doneKm)}
+              <span> km</span>
+            </h1>
+            <p className="sub">
+              of {Math.round(totalKm)} km hiked · {started} of 9 sections started
+              <br />
+              <strong>{pct}% of the Bruce Trail</strong>
+            </p>
+          </div>
           {profile?.goal && (
             <p className="goal">
               Goal: <strong>{profile.goal}</strong>
@@ -98,7 +132,7 @@ export default async function Home() {
             </Link>
           </div>
         </div>
-      </header>
+      </SiteHeader>
 
       <main className="content">
         <section className="card" aria-labelledby="ribbon-h">
@@ -109,23 +143,80 @@ export default async function Home() {
           <Ribbon sections={sections} />
         </section>
 
+        <section className="card" aria-labelledby="cal-h">
+          <div className="card-head">
+            <h2 id="cal-h">
+              {hikes.length === 0
+                ? "Your hiking calendar"
+                : `${hikes.length} ${hikes.length === 1 ? "hike" : "hikes"} since ${longMonth(hikes[hikes.length - 1].hiked_on)}`}
+            </h2>
+            {hikes.length > 0 && <CalendarLegend />}
+          </div>
+          <HikeCalendar days={days} today={today} />
+        </section>
+
         <div className="columns">
-          <section className="card" aria-labelledby="sections-h">
-            <h2 id="sections-h">Sections</h2>
-            <SectionList sections={sections} />
-            <p className="soon-box">
-              <strong>Side trail badges are coming soon.</strong> Side trail hikes you log now are kept in your hike log.
-              When side trail progress arrives, re-import them from GPX or Strava to place them.
-            </p>
+          <section className="card sections-card" aria-labelledby="sections-h">
+            <div>
+              <h2 id="sections-h">Sections</h2>
+              <p className="muted card-lede">
+                Progress toward each club&rsquo;s end to end badge. Open a section&rsquo;s trail log to print or download
+                your record for the badge application.
+              </p>
+            </div>
+            <ul className="badge-grid">
+              {sections.map((s) => {
+                const f = s.length_km ? s.done_km / s.length_km : 0;
+                return (
+                  <li key={s.id} className="badge-card">
+                    <BadgeRing kind={s.slug} fraction={f} />
+                    <span className="badge-name">{s.name}</span>
+                    {s.home && <span className="tag tag-club">your club</span>}
+                    <span className="mono badge-km">
+                      {km1(s.done_km)} of {s.length_km} km · {Math.round(Math.min(1, f) * 100)}%
+                    </span>
+                    <span className="badge-links">
+                      {s.logHref && <Link href={s.logHref}>Trail log</Link>}
+                      {s.club_badge_url && (
+                        <a href={s.club_badge_url} target="_blank" rel="noopener noreferrer">
+                          Club badges<span className="sr-only"> for {s.name} (opens in a new tab)</span>
+                        </a>
+                      )}
+                    </span>
+                  </li>
+                );
+              })}
+            </ul>
           </section>
 
           <div className="stack">
+            {gap && (
+              <section className="card card-dark" aria-labelledby="gap-h">
+                <p id="gap-h" className="eyebrow eyebrow-amber">
+                  {gap.kind === "between" ? "Closest gap" : "Pick up where you left off"}
+                </p>
+                <p className="gap-title">
+                  {gap.fromName && gap.toName ? `${gap.fromName} to ${gap.toName}` : `${gap.sectionName}, km ${km1(gap.from)} to ${km1(gap.to)}`}
+                </p>
+                <p className="gap-detail">
+                  {gap.fromName && gap.toName && `${gap.sectionName} km ${km1(gap.from)} to ${km1(gap.to)}. `}
+                  {gap.kind === "between"
+                    ? `A ${km1(gap.to - gap.from)} km stretch between two parts you've already hiked.`
+                    : `${km1(gap.to - gap.from)} km to the end of the section.`}
+                </p>
+                <Link href={`/log/${gap.sectionSlug}`} className="gap-link">
+                  See the {gap.sectionName} trail log
+                </Link>
+              </section>
+            )}
+
             <section className="card" aria-labelledby="share-h">
               <h2 id="share-h">Share your progress</h2>
               {profile?.share_enabled ? (
                 <>
                   <p className="muted">
-                    Anyone with this link can see your km per section. They can&rsquo;t see your hikes or dates. Choose whether to show your photo and goal in <Link href="/settings">settings</Link>.
+                    Anyone with this link sees your km per section, not your hikes or dates. Your photo and goal show only
+                    if you turn them on in <Link href="/settings">settings</Link>.
                   </p>
                   <label htmlFor="share-url" className="sr-only">
                     Your share link
@@ -154,13 +245,12 @@ export default async function Home() {
               )}
             </section>
 
-            <section className="card" aria-labelledby="hikes-h">
+            <section className="card" aria-labelledby="recent-h">
               <div className="card-head">
-                <h2 id="hikes-h">Your hikes</h2>
-                <span className="head-links">
-                  <Link href="/hikes/new">Log a hike</Link>
-                  <Link href="/hikes/import">Import</Link>
-                </span>
+                <h2 id="recent-h">Recent hikes</h2>
+                <Link href="/hikes" className="small-link">
+                  All hikes
+                </Link>
               </div>
               {unplaced > 0 && (
                 <p className="hint">
@@ -168,24 +258,28 @@ export default async function Home() {
                   {unplaced === 1 ? "it counts" : "they count"} toward your section km.
                 </p>
               )}
-              {hikes.length === 0 ? (
+              {recent.length === 0 ? (
                 <p className="muted">No hikes yet. Log your first one.</p>
               ) : (
-                <ul className="hikes">
-                  {hikes.map((hk) => (
+                <ul className="hikes hikes-compact">
+                  {recent.map((hk) => (
                     <li key={hk.id}>
-                      <span className="mono muted">{fmtDate(hk.hiked_on)}</span>
+                      <span className="mono muted">{short(hk.hiked_on)}</span>
                       <Link href={`/hikes/${hk.id}/edit`} className="hike-name">
                         {hk.name}
                         {hk.trail === "side" && <span className="tag">side trail</span>}
                         {hk.trail === "main" && !placed.has(hk.id) && <span className="tag tag-needs">needs placing</span>}
                       </Link>
-                      <span className="mono">{hk.walked_km != null ? `${Number(hk.walked_km).toFixed(1)} km` : "?"}</span>
+                      <span className="mono">{hk.walked_km != null ? `${km1(Number(hk.walked_km))} km` : ""}</span>
                     </li>
                   ))}
                 </ul>
               )}
             </section>
+
+            <p className="soon-box">
+              <strong>Side trail badges are coming soon.</strong> Side trail hikes you log now stay in your hike log.
+            </p>
           </div>
         </div>
       </main>

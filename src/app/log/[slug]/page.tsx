@@ -2,7 +2,8 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getTrailLog } from "@/lib/trailLog";
-import { Logo } from "@/components/Logo";
+import { getViewer } from "@/lib/viewer";
+import { SiteHeader } from "@/components/SiteHeader";
 import { Footer } from "@/components/Footer";
 import { PrintButton } from "./PrintButton";
 
@@ -18,7 +19,7 @@ export default async function TrailLogPage({ params }: { params: Promise<{ slug:
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const log = await getTrailLog(supabase, slug);
+  const [log, viewer] = await Promise.all([getTrailLog(supabase, slug), getViewer(supabase, user)]);
   if (!log) notFound();
   const { section, rows, gaps, unplaced } = log;
   const pct = Math.round((log.doneKm / section.lengthKm) * 100);
@@ -26,15 +27,13 @@ export default async function TrailLogPage({ params }: { params: Promise<{ slug:
 
   return (
     <div className="page">
-      <header className="hero hero-slim no-print">
-        <div className="bar">
-          <Link href="/" className="logo-link" aria-label="White Blazes home">
-            <Logo />
-          </Link>
-        </div>
-      </header>
+      <div className="no-print">
+        <SiteHeader active="none" name={viewer.name} photo={viewer.photo}>
+          <div className="hero-body hero-spacer" />
+        </SiteHeader>
+      </div>
 
-      <main className="content trail-log">
+      <main className="content content-inner trail-log">
         <section className="card">
           <div className="log-head">
             <div>

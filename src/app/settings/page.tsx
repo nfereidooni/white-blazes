@@ -24,7 +24,7 @@ export default async function SettingsPage() {
   const clubs = (sections ?? []).map((s) => ({ id: s.id as number, name: CLUBS[s.slug as string] ?? `${s.name} Bruce Trail Club` }));
 
   return (
-    <PageShell title="Settings">
+    <PageShell title="Settings" eyebrow={user.email}>
       <h2 className="settings-h">Profile</h2>
       <div className="settings-photo">
         <PhotoUpload userId={user.id} url={photo} name={name} />
@@ -51,6 +51,12 @@ export default async function SettingsPage() {
         <p className="muted">Signed in as {user.email}.</p>
         <DeleteAccount />
       </div>
+
+      <form action="/auth/signout" method="post" className="signout-form">
+        <button type="submit" className="link-button">
+          Sign out
+        </button>
+      </form>
     </PageShell>
   );
 }
