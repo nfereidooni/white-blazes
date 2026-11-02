@@ -193,9 +193,18 @@ h1, h2 { font-family: var(--font-serif), Georgia, serif; font-weight: 400; margi
 .error ul { margin: 6px 0 0; padding-left: 18px; }
 
 /* Map picker */
-.map-picker { display: flex; flex-direction: column; gap: 8px; }
-.map-box { height: 380px; border-radius: 12px; overflow: hidden; border: 1px solid var(--line); background: #dfe7d6; }
+.map-picker { display: flex; flex-direction: column; gap: 10px; }
+.section-chips { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 2px; }
+.chip { flex: none; min-height: 36px; padding: 0 12px; border-radius: 18px; border: 1px solid #c9d3bd; background: var(--paper); font: 600 14px var(--font-sans), sans-serif; color: var(--ink); cursor: pointer; white-space: nowrap; }
+.chip:hover { border-color: var(--forest-600); }
+.chip-on { background: var(--forest-700); border-color: var(--forest-700); color: var(--cream); }
+.map-wrap { position: relative; }
+.map-box { height: 420px; border-radius: 12px; overflow: hidden; border: 1px solid var(--line); background: #dfe7d6; }
 .map-loading { display: grid; place-items: center; color: var(--muted); font-size: 14px; }
+.map-step { position: absolute; top: 10px; left: 10px; right: 56px; pointer-events: none; }
+.map-step span, .map-step button { pointer-events: auto; display: inline-flex; align-items: center; min-height: 36px; padding: 0 12px; border-radius: 18px; background: var(--forest-900); color: var(--cream); font: 600 14px var(--font-sans), sans-serif; border: 0; box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25); }
+.map-step button { cursor: pointer; background: var(--cream); color: var(--forest-900); }
+.map-tip { position: absolute; bottom: 12px; left: 50%; transform: translateX(-50%); margin: 0; padding: 6px 12px; border-radius: 14px; background: rgba(251, 252, 248, 0.92); font-size: 13px; color: var(--ink); white-space: nowrap; pointer-events: none; }
 .map-pin { width: 18px; height: 18px; border-radius: 50%; border: 3px solid var(--cream); box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4); }
 .map-pin-start { background: var(--forest-600); }
 .map-pin-end { background: #c85f1e; }

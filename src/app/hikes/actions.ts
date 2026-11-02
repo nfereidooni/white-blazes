@@ -53,13 +53,16 @@ function parseHike(form: FormData): HikeFields | { error: string } {
 
   if (!name) return { error: "Give the hike a name." };
   if (!/^\d{4}-\d{2}-\d{2}$/.test(hiked_on)) return { error: "Pick the date you hiked." };
-  if (!sectionRaw) return { error: "Pick the section you hiked in." };
+  // With the map or coordinates, the section comes from where you tapped,
+  // so the form doesn't ask for it (resolvePlacement fills it in).
+  const placedByPoints = ["map", "coords"].includes(String(form.get("placement"))) && form.get("trail") !== "side";
+  if (!sectionRaw && !placedByPoints) return { error: "Pick the section you hiked in." };
   if (Number.isNaN(walked) || (walked !== null && walked < 0)) return { error: "Distance walked should be a number of km." };
 
   return {
     name,
     hiked_on,
-    section_id: Number(sectionRaw),
+    section_id: sectionRaw ? Number(sectionRaw) : 0, // 0 = set from the points below
     walked_km: walked,
     is_club_hike: form.get("is_club_hike") === "on",
     trail: form.get("trail") === "side" ? "side" : "main",
@@ -235,4 +238,17 @@ export async function snapPoint(lat: number, lon: number) {
     return { error: `That's ${(Number(d.distance_m) / 1000).toFixed(1)} km from the trail. Tap closer to the white line.` };
   }
   return { sectionId: d.section_id, km: Number(d.km), lat: d.snap_lat, lon: d.snap_lon };
+}
+
+/** The trail between two snapped points, as GeoJSON, so the map can draw the picked stretch. */
+export async function stretchLine(a: { sectionId: number; km: number }, b: { sectionId: number; km: number }) {
+  const [p, q] = a.sectionId < b.sectionId || (a.sectionId === b.sectionId && a.km <= b.km) ? [a, b] : [b, a];
+  const supabase = await createClient();
+  const { data } = await supabase.rpc("trail_stretch", {
+    from_section: p.sectionId,
+    from_km: p.km,
+    to_section: q.sectionId,
+    to_km: q.km,
+  });
+  return data as GeoJSON.MultiLineString | null;
 }

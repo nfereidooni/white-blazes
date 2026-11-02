@@ -23,22 +23,25 @@ export type HikeValues = {
 };
 
 // Ways to say where a hike went. They all end up as km ranges in
-// hike_segments. The map and club series parts are still to come.
+// hike_segments, one per section, so a hike can cross section boundaries.
 const BASE_PLACEMENTS = [
-  { value: "skip", label: "Not yet" },
   { value: "map", label: "Map" },
   { value: "coords", label: "Coordinates" },
   { value: "km", label: "Km range" },
+  { value: "skip", label: "Not yet" },
 ];
 
 const HINTS: Record<string, string> = {
-  keep: "Leave this hike where it is on the trail.",
-  skip: "Saved as “needs placing”. It counts toward section km once you place it.",
+  keep: "",
   map: "",
   coords:
-    "Paste where you started and finished. In Google or Apple Maps, press and hold a spot to copy its coordinates.",
-  km: "Km from the south end of the section, as in the guidebook.",
+    "Paste where you started and finished. In Google or Apple Maps, press and hold a spot to copy its coordinates. If the hike crosses into another section, that's worked out for you.",
+  km: "Km from the south end of the section, as in the guidebook. For a hike that crosses into another section, use the map or coordinates.",
+  skip: "Saved as “needs placing”. It counts toward section km once you place it.",
 };
+
+// These placements work out the section(s) from the points themselves.
+const BY_POINTS = new Set(["map", "coords"]);
 
 export function HikeForm({
   action,
@@ -60,9 +63,11 @@ export function HikeForm({
   const v = initial ?? {};
   const [trail, setTrail] = useState<"main" | "side">(v.trail ?? "main");
   const placements = currentPlacement ? [{ value: "keep", label: "Keep as is" }, ...BASE_PLACEMENTS] : BASE_PLACEMENTS;
-  const [placement, setPlacement] = useState<string>(currentPlacement ? "keep" : "skip");
+  const [placement, setPlacement] = useState<string>(currentPlacement ? "keep" : "map");
   const hasDetails = v.walked_km != null || v.is_club_hike || v.trail === "side";
-  const [sectionId, setSectionId] = useState<number | null>(v.section_id ?? null);
+
+  const placing = showPlacement && trail === "main";
+  const needsSection = !placing || !BY_POINTS.has(placement);
 
   return (
     <form action={formAction} className="hike-form">
@@ -76,26 +81,76 @@ export function HikeForm({
           <label htmlFor="hiked_on">Date</label>
           <input id="hiked_on" name="hiked_on" type="date" required defaultValue={v.hiked_on ?? ""} />
         </div>
-        <div className="field">
-          <label htmlFor="section_id">Section</label>
-          <select
-            id="section_id"
-            name="section_id"
-            required
-            defaultValue={v.section_id ?? ""}
-            onChange={(e) => setSectionId(e.target.value ? Number(e.target.value) : null)}
-          >
-            <option value="" disabled>
-              Choose a section
-            </option>
-            {sections.map((s) => (
-              <option key={s.id} value={s.id}>
-                {s.name}
+        {needsSection && (
+          <div className="field">
+            <label htmlFor="section_id">Section</label>
+            <select id="section_id" name="section_id" required defaultValue={v.section_id ?? ""}>
+              <option value="" disabled>
+                Choose a section
               </option>
-            ))}
-          </select>
-        </div>
+              {sections.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.name}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
       </div>
+
+      {placing && (
+        <fieldset className="field placement">
+          <legend>Where on the trail?</legend>
+          <div className="segmented">
+            {placements.map((p) => (
+              <label key={p.value}>
+                <input
+                  type="radio"
+                  name="placement"
+                  value={p.value}
+                  checked={placement === p.value}
+                  onChange={() => setPlacement(p.value)}
+                />
+                {p.label}
+              </label>
+            ))}
+          </div>
+          {placement === "keep" && currentPlacement && <p className="hint">Currently {currentPlacement}.</p>}
+          {HINTS[placement] && <p className="hint">{HINTS[placement]}</p>}
+
+          {placement === "map" && <MapPicker initialSectionId={v.section_id ?? null} />}
+
+          {placement === "coords" && (
+            <div className="field-row keep">
+              <div className="field">
+                <label htmlFor="coords_start">Start</label>
+                <input id="coords_start" name="coords_start" required inputMode="decimal" placeholder="43.2557, -79.8711" autoComplete="off" />
+              </div>
+              <div className="field">
+                <label htmlFor="coords_end">End</label>
+                <input id="coords_end" name="coords_end" required inputMode="decimal" placeholder="43.2401, -79.9512" autoComplete="off" />
+              </div>
+            </div>
+          )}
+
+          {placement === "km" && (
+            <div className="field-row keep">
+              <div className="field">
+                <label htmlFor="km_from">From km</label>
+                <input id="km_from" name="km_from" type="number" min="0" step="0.1" inputMode="decimal" required />
+              </div>
+              <div className="field">
+                <label htmlFor="km_to">To km</label>
+                <input id="km_to" name="km_to" type="number" min="0" step="0.1" inputMode="decimal" required />
+              </div>
+            </div>
+          )}
+        </fieldset>
+      )}
+
+      {showPlacement && trail === "side" && (
+        <p className="hint">Side trail hikes go in your log but don&rsquo;t count toward main trail km.</p>
+      )}
 
       <details className="more" open={hasDetails}>
         <summary>More details</summary>
@@ -120,61 +175,6 @@ export function HikeForm({
           </label>
         </div>
       </details>
-
-      {showPlacement && trail === "main" && (
-        <fieldset className="field placement">
-          <legend>Where on the trail?</legend>
-          <div className="segmented">
-            {placements.map((p) => (
-              <label key={p.value}>
-                <input
-                  type="radio"
-                  name="placement"
-                  value={p.value}
-                  checked={placement === p.value}
-                  onChange={() => setPlacement(p.value)}
-                />
-                {p.label}
-              </label>
-            ))}
-          </div>
-          {HINTS[placement] !== "" && (
-            <p className="hint">
-              {placement === "keep" && currentPlacement ? `Currently ${currentPlacement}.` : HINTS[placement]}
-            </p>
-          )}
-          {placement === "map" && <MapPicker sectionId={sectionId} />}
-          {placement === "coords" && (
-            <div className="field-row keep">
-              <div className="field">
-                <label htmlFor="coords_start">Start</label>
-                <input id="coords_start" name="coords_start" required inputMode="decimal" placeholder="43.2557, -79.8711" autoComplete="off" />
-              </div>
-              <div className="field">
-                <label htmlFor="coords_end">End</label>
-                <input id="coords_end" name="coords_end" required inputMode="decimal" placeholder="43.2401, -79.9512" autoComplete="off" />
-              </div>
-            </div>
-          )}
-          {placement === "km" && (
-            <div className="field-row keep">
-              <div className="field">
-                <label htmlFor="km_from">From km</label>
-                <input id="km_from" name="km_from" type="number" min="0" step="0.1" inputMode="decimal" required />
-              </div>
-              <div className="field">
-                <label htmlFor="km_to">To km</label>
-                <input id="km_to" name="km_to" type="number" min="0" step="0.1" inputMode="decimal" required />
-              </div>
-            </div>
-          )}
-          <p className="soon-note">Coming soon: choose a club series part.</p>
-        </fieldset>
-      )}
-
-      {showPlacement && trail === "side" && (
-        <p className="hint">Side trail hikes go in your log but don&rsquo;t count toward main trail km.</p>
-      )}
 
       {state.error && (
         <p className="error" role="alert">
