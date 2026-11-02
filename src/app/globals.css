@@ -176,6 +176,15 @@ h1, h2 { font-family: var(--font-serif), Georgia, serif; font-weight: 400; margi
 .label-spacer { font-size: 15px; line-height: 1.2; }
 .field input[type="file"] { padding: 10px 12px; border: 1px dashed #b9c9a6; border-radius: 10px; background: var(--ground); font: 15px var(--font-sans), sans-serif; width: 100%; }
 
+/* Strava archive list */
+.import-list { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--rule); }
+.import-list li { padding: 10px 0; border-bottom: 1px solid var(--rule); display: flex; flex-direction: column; gap: 6px; }
+.import-list li.is-dup { opacity: 0.7; }
+.import-list .tag { margin: 4px 0 0; display: inline-block; }
+.row-options { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; padding-left: 28px; }
+.row-options select { height: 40px; padding: 0 10px; border-radius: 10px; border: 1px solid #c9d3bd; background: var(--ground); font: 14px var(--font-sans), sans-serif; color: var(--ink); max-width: 100%; }
+.error ul { margin: 6px 0 0; padding-left: 18px; }
+
 @media (max-width: 600px) {
   .bar, .hero-body, .content { padding-left: 16px; padding-right: 16px; }
   .hero h1 { font-size: 64px; }

@@ -79,7 +79,7 @@ export default async function Home() {
               Log a hike
             </Link>
             <Link href="/hikes/import" className="button-outline-light">
-              Import GPX
+              Import hikes
             </Link>
           </div>
         </div>
@@ -140,7 +140,7 @@ export default async function Home() {
                 <h2 id="hikes-h">Your hikes</h2>
                 <span className="head-links">
                   <Link href="/hikes/new">Log a hike</Link>
-                  <Link href="/hikes/import">Import GPX</Link>
+                  <Link href="/hikes/import">Import</Link>
                 </span>
               </div>
               {unplaced > 0 && (

@@ -28,7 +28,7 @@ export function GpxImport() {
     startReading(async () => {
       try {
         const t = await parseGpx(await file.text());
-        const p = await previewTrack({ lats: t.lats, lons: t.lons, hash: t.hash, date: t.date });
+        const p = await previewTrack({ source: "gpx", externalId: t.hash, lats: t.lats, lons: t.lons, date: t.date });
         if ("error" in p) return setError(p.error);
         setTrack(t);
         setPreview(p);
@@ -50,9 +50,10 @@ export function GpxImport() {
     setError(null);
     startSaving(async () => {
       const res = await importTrack({
+        source: "gpx",
+        externalId: track.hash,
         lats: track.lats,
         lons: track.lons,
-        hash: track.hash,
         date,
         name,
         walkedKm: track.walkedKm,

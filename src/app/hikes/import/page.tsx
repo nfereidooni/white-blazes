@@ -1,10 +1,11 @@
 import { PageShell } from "@/components/PageShell";
-import { GpxImport } from "./GpxImport";
+import { ImportChooser } from "./ImportChooser";
 
-export default function ImportPage() {
+export default async function ImportPage({ searchParams }: { searchParams: Promise<{ from?: string }> }) {
+  const { from } = await searchParams;
   return (
-    <PageShell title="Import a GPX file">
-      <GpxImport />
+    <PageShell title="Import hikes">
+      <ImportChooser initial={from === "strava" ? "strava" : "gpx"} />
     </PageShell>
   );
 }
