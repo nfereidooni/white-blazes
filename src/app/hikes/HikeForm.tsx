@@ -21,6 +21,7 @@ export type HikeValues = {
   is_club_hike: boolean;
   trail: "main" | "side";
   link: string | null;
+  club_link: string | null;
   notes: string | null;
   hiked_with: string | null;
   hike_leader: string | null;
@@ -71,7 +72,7 @@ export function HikeForm({
   const placements = currentPlacement ? [{ value: "keep", label: "Keep as is" }, ...BASE_PLACEMENTS] : BASE_PLACEMENTS;
   const [placement, setPlacement] = useState<string>(currentPlacement ? "keep" : "map");
   const [club, setClub] = useState(v.is_club_hike ?? false);
-  const hasDetails = [v.walked_km, v.link, v.notes, v.hiked_with, v.start_point, v.end_point].some((x) => x != null && x !== "") ||
+  const hasDetails = [v.walked_km, v.link, v.club_link, v.notes, v.hiked_with, v.start_point, v.end_point].some((x) => x != null && x !== "") ||
     !!v.is_club_hike ||
     v.trail === "side";
 
@@ -186,14 +187,28 @@ export function HikeForm({
             club hike
           </label>
           {club && (
-            <div className="field">
-              <label htmlFor="hike_leader">Hike leader</label>
-              <input id="hike_leader" name="hike_leader" maxLength={100} defaultValue={v.hike_leader ?? ""} />
+            <div className="field-row">
+              <div className="field">
+                <label htmlFor="club_link">Club hike listing</label>
+                <input
+                  id="club_link"
+                  name="club_link"
+                  type="text"
+                  inputMode="url"
+                  maxLength={500}
+                  defaultValue={v.club_link ?? ""}
+                  placeholder="Link to the club's hike page"
+                />
+              </div>
+              <div className="field">
+                <label htmlFor="hike_leader">Hike leader</label>
+                <input id="hike_leader" name="hike_leader" maxLength={100} defaultValue={v.hike_leader ?? ""} />
+              </div>
             </div>
           )}
 
           <div className="field">
-            <label htmlFor="link">Link</label>
+            <label htmlFor="link">Activity link</label>
             <input
               id="link"
               name="link"
@@ -202,7 +217,7 @@ export function HikeForm({
               autoComplete="url"
               maxLength={500}
               defaultValue={v.link ?? ""}
-              placeholder="Club hike listing, Strava, AllTrails…"
+              placeholder="Strava, AllTrails, Garmin…"
             />
           </div>
 

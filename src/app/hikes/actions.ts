@@ -17,6 +17,7 @@ type HikeFields = {
   is_club_hike: boolean;
   trail: "main" | "side";
   link: string | null;
+  club_link: string | null;
   notes: string | null;
   hiked_with: string | null;
   hike_leader: string | null;
@@ -64,6 +65,23 @@ function parseLatLon(raw: FormDataEntryValue | null): [number, number] | null {
 }
 
 /**
+ * A web address from the form: null when empty, undefined when it isn't a
+ * valid http(s) address. "hikes.brucetrail.org/..." without https:// is fine.
+ */
+function parseLink(raw: FormDataEntryValue | null): string | null | undefined {
+  const v = String(raw ?? "").trim();
+  if (!v) return null;
+  try {
+    const u = new URL(/^https?:\/\//i.test(v) ? v : `https://${v}`);
+    if (!["http:", "https:"].includes(u.protocol) || !u.hostname.includes(".")) return undefined;
+    const out = u.toString();
+    return out.length <= 500 ? out : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+/**
  * Check the form before it reaches the database. The database checks again
  * (constraints, the segment trigger, RLS), but catching mistakes here gives
  * people a readable message instead of a Postgres error.
@@ -90,20 +108,10 @@ function parseHike(form: FormData): HikeFields | { error: string } {
   }
   const isClub = form.get("is_club_hike") === "on";
 
-  const rawLink = String(form.get("link") ?? "").trim();
-  let link: string | null = null;
-  if (rawLink) {
-    // Accept "hikes.brucetrail.org/..." without the https:// too.
-    const withScheme = /^https?:\/\//i.test(rawLink) ? rawLink : `https://${rawLink}`;
-    try {
-      const u = new URL(withScheme);
-      if (!["http:", "https:"].includes(u.protocol) || !u.hostname.includes(".")) throw new Error();
-      link = u.toString();
-    } catch {
-      return { error: "That link doesn't look like a web address." };
-    }
-    if (link.length > 500) return { error: "That link is too long." };
-  }
+  const link = parseLink(form.get("link"));
+  if (link === undefined) return { error: "The activity link doesn't look like a web address." };
+  const clubLink = isClub ? parseLink(form.get("club_link")) : null;
+  if (clubLink === undefined) return { error: "The club hike link doesn't look like a web address." };
 
   return {
     name,
@@ -113,9 +121,10 @@ function parseHike(form: FormData): HikeFields | { error: string } {
     is_club_hike: isClub,
     trail: form.get("trail") === "side" ? "side" : "main",
     link,
+    // Only club hikes have a club listing or a leader.
+    club_link: clubLink,
     notes: text.notes,
     hiked_with: text.hiked_with,
-    // Only club hikes have a leader.
     hike_leader: isClub ? text.hike_leader : null,
     start_point: text.start_point,
     end_point: text.end_point,

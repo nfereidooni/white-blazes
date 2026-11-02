@@ -19,7 +19,7 @@ export default async function EditHikePage({ params }: { params: Promise<{ id: s
     supabase
       .from("hikes")
       .select(
-        "id, name, hiked_on, section_id, walked_km, is_club_hike, trail, source, link, notes, hiked_with, hike_leader, start_point, end_point",
+        "id, name, hiked_on, section_id, walked_km, is_club_hike, trail, source, link, club_link, notes, hiked_with, hike_leader, start_point, end_point",
       )
       .eq("id", id)
       .maybeSingle(),
