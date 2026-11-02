@@ -67,3 +67,19 @@ export function closestGap(
   }
   return null;
 }
+
+/** The unhiked stretches of one section, with names from neighbouring hikes when known. */
+export function sectionGaps(covered: [number, number][], lengthKm: number, segs: Segment[]) {
+  const gaps: { from: number; to: number; fromName: string | null; toName: string | null }[] = [];
+  let at = 0;
+  for (const [a, b] of covered) {
+    if (a - at >= 0.05) gaps.push({ from: at, to: a, fromName: null, toName: null });
+    at = Math.max(at, b);
+  }
+  if (lengthKm - at >= 0.05) gaps.push({ from: at, to: lengthKm, fromName: null, toName: null });
+  for (const g of gaps) {
+    g.fromName = segs.find((s) => near(s.to, g.from) && s.endPoint)?.endPoint ?? null;
+    g.toName = segs.find((s) => near(s.from, g.to) && s.startPoint)?.startPoint ?? null;
+  }
+  return gaps;
+}

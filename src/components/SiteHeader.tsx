@@ -3,15 +3,16 @@ import { Logo } from "./Logo";
 import { Avatar } from "./Avatar";
 import { Forest } from "./Forest";
 
-export type Tab = "home" | "hikes" | "none";
+export type Tab = "home" | "map" | "hikes" | "none";
 
 const TABS: { key: Tab; label: string; href: string }[] = [
   { key: "home", label: "Home", href: "/" },
+  { key: "map", label: "Map", href: "/map" },
   { key: "hikes", label: "Hikes", href: "/hikes" },
 ];
 
 /**
- * The dark forest header: logo, tabs and your avatar (which opens settings).
+ * The dark forest header: logo, tabs (Home, Map, Hikes) and your avatar (which opens settings).
  * The hero content below the bar (big km number, page title) is passed in
  * as children, so every page shares one frame.
  */

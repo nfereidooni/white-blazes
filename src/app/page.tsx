@@ -204,8 +204,8 @@ export default async function Home() {
                     ? `A ${km1(gap.to - gap.from)} km stretch between two parts you've already hiked.`
                     : `${km1(gap.to - gap.from)} km to the end of the section.`}
                 </p>
-                <Link href={`/log/${gap.sectionSlug}`} className="gap-link">
-                  See the {gap.sectionName} trail log
+                <Link href={`/map?s=${gap.sectionSlug}`} className="gap-link">
+                  See it on the map
                 </Link>
               </section>
             )}
