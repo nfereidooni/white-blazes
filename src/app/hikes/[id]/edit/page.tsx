@@ -18,7 +18,9 @@ export default async function EditHikePage({ params }: { params: Promise<{ id: s
   const [{ data: hike }, { data: sections }, { data: segments }] = await Promise.all([
     supabase
       .from("hikes")
-      .select("id, name, hiked_on, section_id, walked_km, is_club_hike, trail, source")
+      .select(
+        "id, name, hiked_on, section_id, walked_km, is_club_hike, trail, source, link, notes, hiked_with, hike_leader, start_point, end_point",
+      )
       .eq("id", id)
       .maybeSingle(),
     supabase.from("sections").select("id, name, length_km").order("id"),

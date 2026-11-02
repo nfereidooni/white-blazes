@@ -142,7 +142,7 @@ export async function importTrack(t: ImportInput, goHome = true): Promise<{ erro
   if (!t.date || !/^\d{4}-\d{2}-\d{2}$/.test(t.date)) return { error: "Pick the date you hiked." };
 
   const supabase = await createClient();
-  const { error } = await supabase.rpc("import_track", {
+  const { data: hikeId, error } = await supabase.rpc("import_track", {
     p_name: name,
     p_hiked_on: t.date,
     p_walked_km: t.walkedKm,
@@ -157,6 +157,11 @@ export async function importTrack(t: ImportInput, goHome = true): Promise<{ erro
     // 23505 = unique violation: this file or activity is already in your log.
     if (error.code === "23505") return { error: "Already imported." };
     return { error: error.message };
+  }
+
+  // Strava activities get a link back to the activity.
+  if (t.source === "strava" && hikeId) {
+    await supabase.from("hikes").update({ link: `https://www.strava.com/activities/${t.externalId}` }).eq("id", hikeId);
   }
 
   revalidatePath("/");

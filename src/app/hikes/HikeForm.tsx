@@ -20,6 +20,12 @@ export type HikeValues = {
   walked_km: number | null;
   is_club_hike: boolean;
   trail: "main" | "side";
+  link: string | null;
+  notes: string | null;
+  hiked_with: string | null;
+  hike_leader: string | null;
+  start_point: string | null;
+  end_point: string | null;
 };
 
 // Ways to say where a hike went. They all end up as km ranges in
@@ -64,7 +70,10 @@ export function HikeForm({
   const [trail, setTrail] = useState<"main" | "side">(v.trail ?? "main");
   const placements = currentPlacement ? [{ value: "keep", label: "Keep as is" }, ...BASE_PLACEMENTS] : BASE_PLACEMENTS;
   const [placement, setPlacement] = useState<string>(currentPlacement ? "keep" : "map");
-  const hasDetails = v.walked_km != null || v.is_club_hike || v.trail === "side";
+  const [club, setClub] = useState(v.is_club_hike ?? false);
+  const hasDetails = [v.walked_km, v.link, v.notes, v.hiked_with, v.start_point, v.end_point].some((x) => x != null && x !== "") ||
+    !!v.is_club_hike ||
+    v.trail === "side";
 
   const placing = showPlacement && trail === "main";
   const needsSection = !placing || !BY_POINTS.has(placement);
@@ -173,8 +182,55 @@ export function HikeForm({
             </label>
           </fieldset>
           <label className="choice">
-            <input type="checkbox" name="is_club_hike" defaultChecked={v.is_club_hike ?? false} /> This was a club hike
+            <input type="checkbox" name="is_club_hike" checked={club} onChange={(e) => setClub(e.target.checked)} /> This was a
+            club hike
           </label>
+          {club && (
+            <div className="field">
+              <label htmlFor="hike_leader">Hike leader</label>
+              <input id="hike_leader" name="hike_leader" maxLength={100} defaultValue={v.hike_leader ?? ""} />
+            </div>
+          )}
+
+          <div className="field">
+            <label htmlFor="link">Link</label>
+            <input
+              id="link"
+              name="link"
+              type="text"
+              inputMode="url"
+              autoComplete="url"
+              maxLength={500}
+              defaultValue={v.link ?? ""}
+              placeholder="Club hike listing, Strava, AllTrails…"
+            />
+          </div>
+
+          <div className="field">
+            <label htmlFor="hiked_with">Hiked with</label>
+            <input id="hiked_with" name="hiked_with" maxLength={200} defaultValue={v.hiked_with ?? ""} placeholder="Names, separated by commas" />
+          </div>
+
+          <fieldset className="field">
+            <legend>Start and end points</legend>
+            <p className="hint">Names like &ldquo;Kelso Conservation Area&rdquo;. Club badge logs usually ask for these.</p>
+            <div className="field-row">
+              <div className="field">
+                <label htmlFor="start_point">Started at</label>
+                <input id="start_point" name="start_point" maxLength={120} defaultValue={v.start_point ?? ""} />
+              </div>
+              <div className="field">
+                <label htmlFor="end_point">Finished at</label>
+                <input id="end_point" name="end_point" maxLength={120} defaultValue={v.end_point ?? ""} />
+              </div>
+            </div>
+          </fieldset>
+
+          <div className="field">
+            <label htmlFor="notes">Notes</label>
+            <textarea id="notes" name="notes" rows={4} maxLength={2000} defaultValue={v.notes ?? ""} />
+            <p className="hint">Only you can see these.</p>
+          </div>
         </div>
       </details>
 

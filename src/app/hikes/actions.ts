@@ -16,6 +16,29 @@ type HikeFields = {
   walked_km: number | null;
   is_club_hike: boolean;
   trail: "main" | "side";
+  link: string | null;
+  notes: string | null;
+  hiked_with: string | null;
+  hike_leader: string | null;
+  start_point: string | null;
+  end_point: string | null;
+};
+
+// Optional text fields and their maximum lengths (the database checks these too).
+const TEXT_FIELDS = {
+  notes: 2000,
+  hiked_with: 200,
+  hike_leader: 100,
+  start_point: 120,
+  end_point: 120,
+} as const;
+
+const LABELS: Record<string, string> = {
+  notes: "Notes",
+  hiked_with: "Hiked with",
+  hike_leader: "Hike leader",
+  start_point: "Start point",
+  end_point: "End point",
 };
 
 // How far a pasted point may be from the trail and still count.
@@ -59,13 +82,43 @@ function parseHike(form: FormData): HikeFields | { error: string } {
   if (!sectionRaw && !placedByPoints) return { error: "Pick the section you hiked in." };
   if (Number.isNaN(walked) || (walked !== null && walked < 0)) return { error: "Distance walked should be a number of km." };
 
+  const text: Record<string, string | null> = {};
+  for (const [key, max] of Object.entries(TEXT_FIELDS)) {
+    const v = String(form.get(key) ?? "").trim();
+    if (v.length > max) return { error: `${LABELS[key]} can be up to ${max} characters.` };
+    text[key] = v || null;
+  }
+  const isClub = form.get("is_club_hike") === "on";
+
+  const rawLink = String(form.get("link") ?? "").trim();
+  let link: string | null = null;
+  if (rawLink) {
+    // Accept "hikes.brucetrail.org/..." without the https:// too.
+    const withScheme = /^https?:\/\//i.test(rawLink) ? rawLink : `https://${rawLink}`;
+    try {
+      const u = new URL(withScheme);
+      if (!["http:", "https:"].includes(u.protocol) || !u.hostname.includes(".")) throw new Error();
+      link = u.toString();
+    } catch {
+      return { error: "That link doesn't look like a web address." };
+    }
+    if (link.length > 500) return { error: "That link is too long." };
+  }
+
   return {
     name,
     hiked_on,
     section_id: sectionRaw ? Number(sectionRaw) : 0, // 0 = set from the points below
     walked_km: walked,
-    is_club_hike: form.get("is_club_hike") === "on",
+    is_club_hike: isClub,
     trail: form.get("trail") === "side" ? "side" : "main",
+    link,
+    notes: text.notes,
+    hiked_with: text.hiked_with,
+    // Only club hikes have a leader.
+    hike_leader: isClub ? text.hike_leader : null,
+    start_point: text.start_point,
+    end_point: text.end_point,
   };
 }
 

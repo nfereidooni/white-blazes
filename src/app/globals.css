@@ -123,6 +123,7 @@ h1, h2 { font-family: var(--font-serif), Georgia, serif; font-weight: 400; margi
 .field-row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
 .field label, .field legend { font-weight: 600; font-size: 15px; }
 .field legend { margin-bottom: 6px; }
+.field textarea { padding: 10px 12px; border-radius: 10px; border: 1px solid #c9d3bd; background: var(--ground); font: 16px/1.5 var(--font-sans), sans-serif; color: var(--ink); width: 100%; resize: vertical; }
 .field input:not([type="radio"]):not([type="checkbox"]):not([type="file"]), .field select, .share-url {
   height: 46px; padding: 0 12px; border-radius: 10px; border: 1px solid #c9d3bd; background: var(--ground);
   font: 16px var(--font-sans), sans-serif; color: var(--ink); width: 100%;
