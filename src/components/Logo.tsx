@@ -1,7 +1,10 @@
 /**
  * The White Blazes logo: a double blaze (the trail sign for a turn) and
  * the wordmark in lowercase Bricolage Grotesque.
- * Colour comes from `currentColor`, so set `color` on a parent.
+ *
+ * The blazes are always white, because white blazes are the whole point.
+ * On dark backgrounds they sit straight on the page; on light ones
+ * (`onLight`), they sit on a dark green tile, like the app icon.
  */
 export function DoubleBlaze({ size = 28 }: { size?: number }) {
   return (
@@ -12,10 +15,17 @@ export function DoubleBlaze({ size = 28 }: { size?: number }) {
   );
 }
 
-export function Logo({ size = 20, className = "" }: { size?: number; className?: string }) {
+export function Logo({ size = 20, className = "", onLight = false }: { size?: number; className?: string; onLight?: boolean }) {
+  const mark = Math.round(size * 1.45);
   return (
-    <span className={`logo ${className}`} style={{ fontSize: size }}>
-      <DoubleBlaze size={Math.round(size * 1.45)} />
+    <span className={`logo ${onLight ? "logo-on-light" : ""} ${className}`} style={{ fontSize: size }}>
+      {onLight ? (
+        <span className="logo-tile" style={{ width: mark + 6, height: mark + 6 }}>
+          <DoubleBlaze size={mark} />
+        </span>
+      ) : (
+        <DoubleBlaze size={mark} />
+      )}
       <span>white blazes</span>
     </span>
   );

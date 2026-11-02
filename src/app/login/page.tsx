@@ -19,7 +19,7 @@ export default async function LoginPage({
   return (
     <main className="login">
       <div className="login-card">
-        <Logo size={22} className="login-logo" />
+        <Logo size={22} onLight className="login-logo" />
         <p className="lede">
           White Blazes tracks your hikes on the Bruce Trail, Niagara to Tobermory. Log where you&rsquo;ve
           hiked and see how much of the trail you&rsquo;ve covered, section by section.
