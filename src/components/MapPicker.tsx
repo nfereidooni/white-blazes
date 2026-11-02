@@ -3,7 +3,7 @@
 import "maplibre-gl/dist/maplibre-gl.css";
 import { useEffect, useRef, useState } from "react";
 import type { GeoJSONSource, Map as MlMap, Marker } from "maplibre-gl";
-import { snapPoint, stretchLine } from "@/app/hikes/actions";
+import { snapPoint } from "@/app/hikes/actions";
 
 type Snapped = { sectionId: number; km: number; lat: number; lon: number };
 type SectionInfo = { id: number; name: string; lengthKm: number; bounds: [[number, number], [number, number]] };
@@ -39,6 +39,8 @@ export function MapPicker({ initialSectionId }: { initialSectionId: number | nul
   const pointsRef = useRef<Snapped[]>([]);
   pointsRef.current = points;
   const sectionsRef = useRef<SectionInfo[]>([]);
+  // Each section's line, south to north, for drawing the picked stretch.
+  const lines = useRef<Map<number, [number, number][]>>(new Map());
   sectionsRef.current = sections;
 
   // Build the map once. maplibre-gl is loaded only here, so other pages don't download it.
@@ -68,6 +70,7 @@ export function MapPicker({ initialSectionId }: { initialSectionId: number | nul
           };
         });
         setSections(info);
+        lines.current = new Map((data.features as Feature[]).map((f) => [f.properties.section_id, f.geometry.coordinates]));
         m.addSource("trail", { type: "geojson", data });
         m.addSource("picked", { type: "geojson", data: EMPTY });
         m.addLayer({ id: "trail-casing", type: "line", source: "trail", paint: { "line-color": "#13251a", "line-width": 6 } });
@@ -165,8 +168,9 @@ export function MapPicker({ initialSectionId }: { initialSectionId: number | nul
     markers.current.push(new lib.Marker({ element: el }).setLngLat([res.lon, res.lat]).addTo(m));
 
     if (next.length === 2) {
-      const line = await stretchLine(next[0], next[1]);
-      if (line) (m.getSource("picked") as GeoJSONSource | undefined)?.setData(line);
+      // Draw the stretch right here in the browser: cut each section's line
+      // between the two snapped points, and include any sections in between.
+      (m.getSource("picked") as GeoJSONSource | undefined)?.setData(stretchGeoJson(next[0], next[1], lines.current));
     }
   }
 
@@ -224,6 +228,12 @@ export function MapPicker({ initialSectionId }: { initialSectionId: number | nul
               <li key={line}>{line}</li>
             ))}
           </ul>
+          <dl className="coords">
+            <dt>Start</dt>
+            <dd className="mono">{fmtLatLon(a)}</dd>
+            <dt>Finish</dt>
+            <dd className="mono">{fmtLatLon(b)}</dd>
+          </dl>
         </div>
       )}
 
@@ -255,3 +265,34 @@ function describe(a: Snapped, b: Snapped, sections: SectionInfo[]) {
 function totalKm(a: Snapped, b: Snapped, sections: SectionInfo[]) {
   return pieces(a, b, sections).reduce((t, x) => t + (x.to - x.from), 0);
 }
+
+/** The trail between two snapped points as a MultiLineString, one line per section. */
+function stretchGeoJson(a: Snapped, b: Snapped, lines: Map<number, [number, number][]>) {
+  const [p, q] = a.sectionId < b.sectionId || (a.sectionId === b.sectionId && a.km <= b.km) ? [a, b] : [b, a];
+  const nearest = (coords: [number, number][], pt: Snapped) => {
+    let best = 0;
+    let bd = Infinity;
+    coords.forEach(([x, y], i) => {
+      const d = (x - pt.lon) ** 2 + (y - pt.lat) ** 2;
+      if (d < bd) {
+        bd = d;
+        best = i;
+      }
+    });
+    return best;
+  };
+  const parts: [number, number][][] = [];
+  for (let id = p.sectionId; id <= q.sectionId; id++) {
+    const coords = lines.get(id) ?? [];
+    let from = id === p.sectionId ? nearest(coords, p) : 0;
+    let to = id === q.sectionId ? nearest(coords, q) : coords.length - 1;
+    if (from > to) [from, to] = [to, from];
+    const piece = coords.slice(from, to + 1);
+    if (id === p.sectionId) piece.unshift([p.lon, p.lat]);
+    if (id === q.sectionId) piece.push([q.lon, q.lat]);
+    if (piece.length > 1) parts.push(piece);
+  }
+  return { type: "Feature" as const, properties: {}, geometry: { type: "MultiLineString" as const, coordinates: parts } };
+}
+
+const fmtLatLon = (p: Snapped) => `${p.lat.toFixed(5)}, ${p.lon.toFixed(5)}`;

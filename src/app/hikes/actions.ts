@@ -240,15 +240,3 @@ export async function snapPoint(lat: number, lon: number) {
   return { sectionId: d.section_id, km: Number(d.km), lat: d.snap_lat, lon: d.snap_lon };
 }
 
-/** The trail between two snapped points, as GeoJSON, so the map can draw the picked stretch. */
-export async function stretchLine(a: { sectionId: number; km: number }, b: { sectionId: number; km: number }) {
-  const [p, q] = a.sectionId < b.sectionId || (a.sectionId === b.sectionId && a.km <= b.km) ? [a, b] : [b, a];
-  const supabase = await createClient();
-  const { data } = await supabase.rpc("trail_stretch", {
-    from_section: p.sectionId,
-    from_km: p.km,
-    to_section: q.sectionId,
-    to_km: q.km,
-  });
-  return data as GeoJSON.MultiLineString | null;
-}
