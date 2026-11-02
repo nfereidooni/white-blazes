@@ -200,6 +200,9 @@ h1, h2 { font-family: var(--font-serif), Georgia, serif; font-weight: 400; margi
 .chip-on { background: var(--forest-700); border-color: var(--forest-700); color: var(--cream); }
 .map-wrap { position: relative; }
 .map-box { height: 420px; border-radius: 12px; overflow: hidden; border: 1px solid var(--line); background: #dfe7d6; }
+/* A crosshair says "tap a spot" better than MapLibre's default grab hand. Dragging still pans. */
+.map-box .maplibregl-canvas-container.maplibregl-interactive { cursor: crosshair; }
+.map-box .maplibregl-canvas-container.maplibregl-interactive:active { cursor: grabbing; }
 .map-loading { display: grid; place-items: center; color: var(--muted); font-size: 14px; }
 .map-step { position: absolute; top: 10px; left: 10px; right: 56px; pointer-events: none; }
 .map-step span, .map-step button { pointer-events: auto; display: inline-flex; align-items: center; min-height: 36px; padding: 0 12px; border-radius: 18px; background: var(--forest-900); color: var(--cream); font: 600 14px var(--font-sans), sans-serif; border: 0; box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25); }
