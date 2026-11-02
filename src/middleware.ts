@@ -9,7 +9,7 @@ import { NextResponse, type NextRequest } from "next/server";
  * refresh token for a new one and writes fresh cookies onto the response.
  * Pages can then trust that the session they read is current.
  *
- * It also sends signed-out visitors to /login.
+ * It also sends signed-out visitors to /login, except on public pages.
  */
 export async function middleware(request: NextRequest) {
   let response = NextResponse.next({ request });
@@ -43,7 +43,8 @@ export async function middleware(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   const path = request.nextUrl.pathname;
-  const isPublic = path.startsWith("/login") || path.startsWith("/auth");
+  // /p/<slug> is a public share page: anyone with the link can open it.
+  const isPublic = path.startsWith("/login") || path.startsWith("/auth") || path.startsWith("/p/");
 
   if (!user && !isPublic) {
     const url = request.nextUrl.clone();

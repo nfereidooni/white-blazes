@@ -1,0 +1,157 @@
+"use client";
+
+import Link from "next/link";
+import { useActionState, useState } from "react";
+import type { HikeFormState } from "./actions";
+
+type Section = { id: number; name: string; length_km: number };
+
+export type HikeValues = {
+  name: string;
+  hiked_on: string;
+  section_id: number | null;
+  walked_km: number | null;
+  is_club_hike: boolean;
+  trail: "main" | "side";
+  km_from: number | null;
+  km_to: number | null;
+};
+
+// Ways to say where a hike went. They all end up as the same km range in
+// hike_segments. Map, coordinates and club series parts need the trail line
+// (Stage 4), so only these two work for now.
+const PLACEMENTS = [
+  { value: "skip", label: "Not yet" },
+  { value: "km", label: "Km range" },
+];
+
+const HINTS: Record<string, string> = {
+  skip: "Saved as “needs placing”. It counts toward section km once you place it.",
+  km: "Km from the south end of the section, as in the guidebook.",
+};
+
+export function HikeForm({
+  action,
+  sections,
+  initial,
+  showPlacement,
+  submitLabel,
+}: {
+  action: (prev: HikeFormState, form: FormData) => Promise<HikeFormState>;
+  sections: Section[];
+  initial?: Partial<HikeValues>;
+  showPlacement: boolean;
+  submitLabel: string;
+}) {
+  const [state, formAction, pending] = useActionState(action, {});
+  const v = initial ?? {};
+  const [trail, setTrail] = useState<"main" | "side">(v.trail ?? "main");
+  const [placement, setPlacement] = useState<string>(v.km_from != null ? "km" : "skip");
+  const hasDetails = v.walked_km != null || v.is_club_hike || v.trail === "side";
+
+  return (
+    <form action={formAction} className="hike-form">
+      <div className="field">
+        <label htmlFor="name">Name</label>
+        <input id="name" name="name" required maxLength={200} defaultValue={v.name ?? ""} placeholder="Mono Cliffs loop" />
+      </div>
+
+      <div className="field-row">
+        <div className="field">
+          <label htmlFor="hiked_on">Date</label>
+          <input id="hiked_on" name="hiked_on" type="date" required defaultValue={v.hiked_on ?? ""} />
+        </div>
+        <div className="field">
+          <label htmlFor="section_id">Section</label>
+          <select id="section_id" name="section_id" required defaultValue={v.section_id ?? ""}>
+            <option value="" disabled>
+              Choose a section
+            </option>
+            {sections.map((s) => (
+              <option key={s.id} value={s.id}>
+                {s.name}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      <details className="more" open={hasDetails}>
+        <summary>More details</summary>
+        <div className="more-body">
+          <div className="field">
+            <label htmlFor="walked_km">Distance walked (km)</label>
+            <input id="walked_km" name="walked_km" type="number" min="0" step="0.1" inputMode="decimal" defaultValue={v.walked_km ?? ""} />
+          </div>
+          <fieldset className="field">
+            <legend>Trail</legend>
+            <label className="choice">
+              <input type="radio" name="trail" value="main" checked={trail === "main"} onChange={() => setTrail("main")} /> Main
+              trail (white blazes)
+            </label>
+            <label className="choice">
+              <input type="radio" name="trail" value="side" checked={trail === "side"} onChange={() => setTrail("side")} /> Side
+              trail (blue blazes)
+            </label>
+          </fieldset>
+          <label className="choice">
+            <input type="checkbox" name="is_club_hike" defaultChecked={v.is_club_hike ?? false} /> This was a club hike
+          </label>
+        </div>
+      </details>
+
+      {showPlacement && trail === "main" && (
+        <fieldset className="field placement">
+          <legend>Where on the trail?</legend>
+          <div className="segmented">
+            {PLACEMENTS.map((p) => (
+              <label key={p.value}>
+                <input
+                  type="radio"
+                  name="placement"
+                  value={p.value}
+                  checked={placement === p.value}
+                  onChange={() => setPlacement(p.value)}
+                />
+                {p.label}
+              </label>
+            ))}
+          </div>
+          <p className="hint">{HINTS[placement]}</p>
+          {placement === "km" && (
+            <div className="field-row keep">
+              <div className="field">
+                <label htmlFor="km_from">From km</label>
+                <input id="km_from" name="km_from" type="number" min="0" step="0.1" inputMode="decimal" required defaultValue={v.km_from ?? ""} />
+              </div>
+              <div className="field">
+                <label htmlFor="km_to">To km</label>
+                <input id="km_to" name="km_to" type="number" min="0" step="0.1" inputMode="decimal" required defaultValue={v.km_to ?? ""} />
+              </div>
+            </div>
+          )}
+          <p className="soon-note">Coming soon: pick on the map, paste coordinates, or choose a club series part.</p>
+        </fieldset>
+      )}
+
+      {showPlacement && trail === "side" && (
+        <p className="hint">Side trail hikes go in your log but don&rsquo;t count toward main trail km.</p>
+      )}
+
+      {state.error && (
+        <p className="error" role="alert">
+          {state.error}
+        </p>
+      )}
+
+      <div className="actions">
+        <button type="submit" className="primary" disabled={pending}>
+          {pending ? "Saving…" : submitLabel}
+        </button>
+        <Link href="/" className="secondary">
+          Cancel
+        </Link>
+      </div>
+    </form>
+  );
+}
