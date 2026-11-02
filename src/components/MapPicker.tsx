@@ -197,9 +197,12 @@ export function MapPicker({ initialSectionId }: { initialSectionId: number | nul
           {step ? (
             <span>{busy ? "Finding the trail…" : step}</span>
           ) : (
-            <button type="button" onClick={reset}>
-              Start over
-            </button>
+            <>
+              <span className="map-km">{totalKm(a, b, sections).toFixed(1)} km</span>
+              <button type="button" onClick={reset}>
+                Start over
+              </button>
+            </>
           )}
         </div>
         {!active && !a && <p className="map-tip">Pick a section above to zoom in.</p>}
