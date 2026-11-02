@@ -209,6 +209,8 @@ h1, h2 { font-family: var(--font-serif), Georgia, serif; font-weight: 400; margi
 .map-pin-start { background: var(--forest-600); }
 .map-pin-end { background: #c85f1e; }
 
+.soon-box { margin: 4px 0 0; padding: 12px 14px; border-radius: 10px; background: #e4ecf7; color: #1d3557; font-size: 14px; line-height: 1.5; }
+
 @media (max-width: 600px) {
   .bar, .hero-body, .content { padding-left: 16px; padding-right: 16px; }
   .hero h1 { font-size: 64px; }

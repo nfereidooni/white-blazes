@@ -98,6 +98,10 @@ export default async function Home() {
           <section className="card" aria-labelledby="sections-h">
             <h2 id="sections-h">Sections</h2>
             <SectionList sections={sections} />
+            <p className="soon-box">
+              <strong>Side trail badges are coming soon.</strong> Side trail hikes you log now are kept in your hike log.
+              When side trail progress arrives, re-import them from GPX or Strava to place them.
+            </p>
           </section>
 
           <div className="stack">

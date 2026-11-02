@@ -149,7 +149,9 @@ export function HikeForm({
       )}
 
       {showPlacement && trail === "side" && (
-        <p className="hint">Side trail hikes go in your log but don&rsquo;t count toward main trail km.</p>
+        <p className="hint">
+          Side trail progress is coming soon. For now this hike goes in your log but doesn&rsquo;t count toward any km.
+        </p>
       )}
 
       <details className="more" open={hasDetails}>
