@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { LoginForm } from "./LoginForm";
 import { Logo } from "@/components/Logo";
+import { Forest } from "@/components/Forest";
 
 export default async function LoginPage({
   searchParams,
@@ -18,6 +19,7 @@ export default async function LoginPage({
 
   return (
     <main className="login">
+      <Forest />
       <div className="login-card">
         <Logo size={22} onLight className="login-logo" />
         {deleted && (

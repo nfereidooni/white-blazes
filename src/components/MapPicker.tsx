@@ -181,6 +181,7 @@ export function MapPicker({ initialSectionId }: { initialSectionId: number | nul
     <div className="map-picker">
       {sections.length > 0 && (
         <div className="section-chips" role="group" aria-label="Zoom to a section">
+          <span className="chips-label" aria-hidden="true">Zoom to</span>
           {sections.map((s) => (
             <button
               key={s.id}

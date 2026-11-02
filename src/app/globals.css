@@ -426,3 +426,35 @@ a.chip-on, a.chip-on:hover { color: var(--cream); }
   .log-new { grid-column: 3; grid-row: 3; font-size: 12px; }
   .search { width: 100%; }
 }
+
+/* Stage 4: log a hike form */
+.segmented { padding: 0; gap: 6px; border: 0; background: transparent; border-radius: 0; }
+.segmented label { min-height: 42px; padding: 0 16px; border-radius: 21px; border: 1px solid #c9d3bd; background: var(--paper); color: var(--ink); }
+.segmented label:hover { border-color: var(--forest-600); }
+.segmented label:has(input:checked) { background: var(--forest-700); border-color: var(--forest-700); color: var(--cream); box-shadow: none; }
+.map-picker .section-chips { flex-wrap: wrap; overflow: visible; }
+
+/* Stage 4: trail log */
+.log-who { display: flex; gap: 16px; align-items: center; }
+.log-who svg { flex: none; }
+.log-title { font-family: var(--font-serif), Georgia, serif; font-weight: 400; font-size: 26px; margin: 0; }
+.log-who .mono { margin: 4px 0 0; font-size: 14px; }
+.print-only { display: none; }
+@media print {
+  .print-only { display: inline; }
+  p.print-only { display: block; }
+  .content-inner { margin-top: 0; }
+}
+
+/* Stage 4: settings */
+.settings-form { display: flex; flex-direction: column; gap: 28px; }
+.card-danger { border-color: #e2b8ad; }
+.signout-form { margin: 0; }
+
+/* Stage 4: sign in */
+.login { position: relative; overflow: hidden; }
+.login .forest { position: absolute; inset: 0; }
+.login-card { position: relative; box-shadow: 0 20px 50px rgba(0, 0, 0, 0.25); }
+.card > button.danger { align-self: flex-start; }
+.chips-label { align-self: center; font-size: 13px; color: var(--muted); margin-right: 2px; }
+.map-picker .chip { min-height: 32px; padding: 0 10px; font-size: 13px; }

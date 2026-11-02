@@ -82,7 +82,7 @@ export function HikeForm({
   return (
     <form action={formAction} className="hike-form">
       <div className="field">
-        <label htmlFor="name">Name</label>
+        <label htmlFor="name">Hike name</label>
         <input id="name" name="name" required maxLength={200} defaultValue={v.name ?? ""} placeholder="Mono Cliffs loop" />
       </div>
 

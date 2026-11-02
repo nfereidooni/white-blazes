@@ -3,7 +3,8 @@ import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getTrailLog } from "@/lib/trailLog";
 import { getViewer } from "@/lib/viewer";
-import { SiteHeader } from "@/components/SiteHeader";
+import { SiteHeader, HeaderTitle } from "@/components/SiteHeader";
+import { Badge } from "@/components/Badge";
 import { Footer } from "@/components/Footer";
 import { PrintButton } from "./PrintButton";
 
@@ -29,25 +30,37 @@ export default async function TrailLogPage({ params }: { params: Promise<{ slug:
     <div className="page">
       <div className="no-print">
         <SiteHeader active="none" name={viewer.name} photo={viewer.photo}>
-          <div className="hero-body hero-spacer" />
+          <HeaderTitle eyebrow={section.club} title={`${section.name} trail log`} />
         </SiteHeader>
       </div>
 
       <main className="content content-inner trail-log">
         <section className="card">
           <div className="log-head">
-            <div>
-              <p className="eyebrow-dark">{section.club}</p>
-              <h1 className="card-title">{section.name} trail log</h1>
-              <p className="muted">
-                {log.hiker} · {km(log.doneKm)} of {section.lengthKm} km · {pct}%
-              </p>
+            <div className="log-who">
+              <Badge kind={section.slug} size={64} />
+              <div>
+                {/* The page header doesn't print, so the printout carries its own title. */}
+                <p className="eyebrow-dark print-only">{section.club}</p>
+                <h1 className="log-title">
+                  <span className="print-only">{section.name} trail log · </span>
+                  {log.hiker} · {section.name}
+                </h1>
+                <p className="mono muted">
+                  {km(log.doneKm)} of {section.lengthKm} km · {pct}% · {new Set(rows.map((r) => r.hikeId)).size} hikes
+                </p>
+              </div>
             </div>
             <div className="actions no-print">
               <PrintButton />
               <a href={`/log/${section.slug}/csv`} className="secondary" download>
                 Download spreadsheet (.csv)
               </a>
+              {section.badgeUrl && (
+                <a href={section.badgeUrl} target="_blank" rel="noopener noreferrer" className="small-link">
+                  Club badges<span className="sr-only"> (opens in a new tab)</span>
+                </a>
+              )}
             </div>
           </div>
 

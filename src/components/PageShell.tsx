@@ -6,19 +6,22 @@ import { Footer } from "./Footer";
 
 /**
  * The frame for inner pages: the slim forest header with the page title,
- * then the page's content in a card.
+ * then the page's content in a card (or several, with `bare`).
  */
 export async function PageShell({
   title,
   eyebrow,
   tab = "none",
   wide = false,
+  bare = false,
   children,
 }: {
   title: string;
   eyebrow?: string;
   tab?: Tab;
   wide?: boolean;
+  /** Children bring their own cards. */
+  bare?: boolean;
   children: React.ReactNode;
 }) {
   const supabase = await createClient();
@@ -34,7 +37,7 @@ export async function PageShell({
         <HeaderTitle eyebrow={eyebrow} title={title} />
       </SiteHeader>
       <main className={wide ? "content content-inner" : "content content-inner narrow"}>
-        <section className="card">{children}</section>
+        {bare ? children : <section className="card">{children}</section>}
       </main>
       <Footer />
     </div>
