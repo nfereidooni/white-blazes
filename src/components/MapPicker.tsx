@@ -83,7 +83,25 @@ export function MapPicker({ initialSectionId }: { initialSectionId: number | nul
         if (initialSectionId) fit(info.find((s) => s.id === initialSectionId)?.bounds, false);
       });
 
-      m.on("click", (e) => onTap(e.lngLat.lat, e.lngLat.lng));
+      // Only a click on (or right beside) the trail places a point, and the
+      // cursor says so: a crosshair over the trail, the usual grab hand
+      // everywhere else so people can drag the map around.
+      const nearTrail = (pt: { x: number; y: number }) =>
+        m.getLayer("trail") &&
+        m.queryRenderedFeatures(
+          [
+            [pt.x - 14, pt.y - 14],
+            [pt.x + 14, pt.y + 14],
+          ],
+          { layers: ["trail", "trail-casing"] },
+        ).length > 0;
+      m.on("mousemove", (e) => {
+        m.getCanvas().style.cursor = nearTrail(e.point) ? "crosshair" : "";
+      });
+      m.on("click", (e) => {
+        if (nearTrail(e.point)) onTap(e.lngLat.lat, e.lngLat.lng);
+        else setMessage("Click on the white trail line to place a point. Drag to move the map.");
+      });
     })();
     return () => {
       cancelled = true;
