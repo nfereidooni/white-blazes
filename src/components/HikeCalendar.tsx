@@ -5,18 +5,13 @@ const iso = (d: Date) => d.toISOString().slice(0, 10);
 const level = (km: number) => (km <= 0 ? 1 : km < 8 ? 1 : km < 12 ? 2 : km < 16 ? 3 : 4);
 
 /**
- * One square per day, a column per week (Monday on top), from the month of
- * your first hike to today. Darker squares are days with more km on the
- * trail. Capped at two years so it stays readable.
+ * One square per day, a column per week (Monday on top), from `from` to
+ * `to` (YYYY-MM-DD). Darker squares are days with more km on the trail.
  */
-export function HikeCalendar({ days, today }: { days: Map<string, number>; today: string }) {
-  const dates = [...days.keys()].sort();
-  if (!dates.length) return <p className="muted">Your hikes will show up here, one square per day.</p>;
-
-  const end = new Date(`${today}T00:00:00Z`);
-  const earliest = new Date(`${dates[0].slice(0, 7)}-01T00:00:00Z`);
-  const cap = new Date(end.getTime() - 104 * 7 * 86400000);
-  const start = earliest < cap ? cap : earliest;
+export function HikeCalendar({ days, from, to }: { days: Map<string, number>; from: string; to: string }) {
+  const end = new Date(`${to}T00:00:00Z`);
+  const start = new Date(`${from}T00:00:00Z`);
+  const shown = [...days.keys()].filter((d) => d >= from && d <= to).length;
   // Back up to the Monday on or before the start.
   start.setUTCDate(start.getUTCDate() - ((start.getUTCDay() + 6) % 7));
 
@@ -37,12 +32,13 @@ export function HikeCalendar({ days, today }: { days: Map<string, number>; today
       }
     }
     const key = iso(d);
-    cells.push({ date: key, km: days.get(key) });
+    // Days before the range (padding back to Monday) stay blank.
+    cells.push({ date: key, km: key < from ? undefined : days.get(key) });
   }
 
   return (
     <div className="calendar-scroll">
-      <div className="calendar" style={{ minWidth: Math.max(560, col * 13) }}>
+      <div className="calendar" style={{ minWidth: Math.max(560, col * 12) }}>
         <div className="calendar-months" style={{ gridTemplateColumns: `repeat(${col}, minmax(0, 1fr))` }} aria-hidden="true">
           {months.filter((m) => m.col <= col - 2).map((m) => (
             <span key={`${m.col}-${m.label}`} style={{ gridColumn: m.col }}>
@@ -50,7 +46,7 @@ export function HikeCalendar({ days, today }: { days: Map<string, number>; today
             </span>
           ))}
         </div>
-        <div className="calendar-days" role="img" aria-label={`Hike calendar: ${dates.length} hiking days since ${dates[0]}`}>
+        <div className="calendar-days" role="img" aria-label={`Hike calendar from ${from} to ${to}: ${shown} hiking ${shown === 1 ? "day" : "days"}`}>
           {cells.map((c) => (
             <span
               key={c.date}

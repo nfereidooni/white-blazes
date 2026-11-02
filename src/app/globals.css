@@ -396,3 +396,4 @@ a.chip-on, a.chip-on:hover { color: var(--cream); }
 .map-columns > .map-card { flex: 3 1 560px; }
 .map-columns > .stack { flex: 2 1 400px; }
 .facts { grid-template-columns: 6.5em minmax(0, 1fr); }
+.year-chips { display: flex; gap: 6px; flex-wrap: wrap; }

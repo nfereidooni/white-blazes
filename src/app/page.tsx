@@ -22,7 +22,8 @@ const longMonth = (iso: string) =>
   new Date(`${iso}T12:00:00`).toLocaleDateString("en-CA", { month: "long", year: "numeric" });
 const km1 = (n: number) => n.toFixed(1);
 
-export default async function Home() {
+export default async function Home({ searchParams }: { searchParams: Promise<{ year?: string }> }) {
+  const { year } = await searchParams;
   const supabase = await createClient();
 
   // getUser() checks the session with the Auth server, so it can't be faked
@@ -79,6 +80,16 @@ export default async function Home() {
     days.set(h.hiked_on, (days.get(h.hiked_on) ?? 0) + km);
   }
   const today = new Date().toLocaleDateString("en-CA", { timeZone: "America/Toronto" });
+
+  // Calendar range: the past 12 months, or one calendar year from the chips.
+  const years = [...new Set(hikes.map((h) => h.hiked_on.slice(0, 4)))].sort().reverse();
+  const pickedYear = year && years.includes(year) ? year : null;
+  const yearAgo = new Date(`${today}T00:00:00Z`);
+  yearAgo.setUTCDate(yearAgo.getUTCDate() - 364);
+  const calFrom = pickedYear ? `${pickedYear}-01-01` : yearAgo.toISOString().slice(0, 10);
+  const calTo = pickedYear ? (pickedYear === today.slice(0, 4) ? today : `${pickedYear}-12-31`) : today;
+  const inRange = hikes.filter((h) => h.hiked_on >= calFrom && h.hiked_on <= calTo).length;
+  const plural = (n: number) => `${n} ${n === 1 ? "hike" : "hikes"}`;
 
   const gap = closestGap(
     raw.map((s) => ({
@@ -148,11 +159,32 @@ export default async function Home() {
             <h2 id="cal-h">
               {hikes.length === 0
                 ? "Your hiking calendar"
-                : `${hikes.length} ${hikes.length === 1 ? "hike" : "hikes"} since ${longMonth(hikes[hikes.length - 1].hiked_on)}`}
+                : pickedYear
+                  ? `${plural(inRange)} in ${pickedYear}`
+                  : `${plural(inRange)} in the past year`}
             </h2>
             {hikes.length > 0 && <CalendarLegend />}
           </div>
-          <HikeCalendar days={days} today={today} />
+          {hikes.length === 0 ? (
+            <p className="muted">Your hikes will show up here, one square per day.</p>
+          ) : (
+            <>
+              <nav className="year-chips" aria-label="Calendar year">
+                <Link href="/" scroll={false} className={pickedYear ? "chip" : "chip chip-on"} aria-current={pickedYear ? undefined : "true"}>
+                  Past year
+                </Link>
+                {years.map((y) => (
+                  <Link key={y} href={`/?year=${y}`} scroll={false} className={y === pickedYear ? "chip chip-on" : "chip"} aria-current={y === pickedYear ? "true" : undefined}>
+                    {y}
+                  </Link>
+                ))}
+              </nav>
+              <HikeCalendar days={days} from={calFrom} to={calTo} />
+              <p className="hint">
+                {plural(hikes.length)} in all since {longMonth(hikes[hikes.length - 1].hiked_on)}.
+              </p>
+            </>
+          )}
         </section>
 
         <div className="columns">
