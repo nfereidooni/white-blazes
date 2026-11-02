@@ -89,7 +89,8 @@ h1, h2 { font-family: var(--font-serif), Georgia, serif; font-weight: 400; margi
 
 /* Shared bits */
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
-.logo-link { color: inherit; text-decoration: none; }
+.logo-link, .logo-link:hover { color: var(--cream); text-decoration: none; }
+.logo-link:hover { opacity: 0.85; }
 .hero-slim .bar { padding-bottom: 96px; }
 .hero-actions { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 8px; }
 .stack { flex: 2 1 340px; display: flex; flex-direction: column; gap: 24px; min-width: 0; }
