@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Logo } from "./Logo";
+import { Footer } from "./Footer";
 
 /** A simple page frame for forms: dark bar with the logo, then a card. */
 export function PageShell({ title, children }: { title: string; children: React.ReactNode }) {
@@ -18,6 +19,7 @@ export function PageShell({ title, children }: { title: string; children: React.
           {children}
         </section>
       </main>
+      <Footer />
     </div>
   );
 }

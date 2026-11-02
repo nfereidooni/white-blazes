@@ -44,7 +44,9 @@ export async function middleware(request: NextRequest) {
 
   const path = request.nextUrl.pathname;
   // /p/<slug> is a public share page: anyone with the link can open it.
-  const isPublic = path.startsWith("/login") || path.startsWith("/auth") || path.startsWith("/p/");
+  // /api/trail is the public trail line for maps.
+  const isPublic =
+    path.startsWith("/login") || path.startsWith("/auth") || path.startsWith("/p/") || path === "/api/trail";
 
   if (!user && !isPublic) {
     const url = request.nextUrl.clone();

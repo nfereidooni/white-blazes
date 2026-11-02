@@ -91,11 +91,14 @@ async function resolvePlacement(
     return [{ section_id: hike.section_id, from, to }];
   }
 
-  if (placement === "coords") {
+  // The map picker fills in the same two fields as pasted coordinates.
+  if (placement === "coords" || placement === "map") {
     const start = parseLatLon(form.get("coords_start"));
     const end = parseLatLon(form.get("coords_end"));
     if (!start || !end) {
-      return { error: "Paste each point as latitude, longitude, for example 43.2557, -79.8711." };
+      return placement === "map"
+        ? { error: "Tap where you started and where you finished on the map." }
+        : { error: "Paste each point as latitude, longitude, for example 43.2557, -79.8711." };
     }
 
     // Ask Postgres where each point falls on the trail (PostGIS does the maths).
@@ -219,4 +222,17 @@ export async function deleteHike(id: string) {
   await supabase.from("hikes").delete().eq("id", id);
   revalidatePath("/");
   redirect("/");
+}
+
+/** Where a tapped map point lands on the trail, for the map picker. */
+export async function snapPoint(lat: number, lon: number) {
+  if (!Number.isFinite(lat) || !Number.isFinite(lon)) return { error: "That point couldn't be read." };
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("snap_to_trail", { lat, lon }).single();
+  if (error || !data) return { error: "Couldn't find the trail near there." };
+  const d = data as { section_id: number; km: number; distance_m: number; snap_lat: number; snap_lon: number };
+  if (Number(d.distance_m) > MAX_OFF_TRAIL_M) {
+    return { error: `That's ${(Number(d.distance_m) / 1000).toFixed(1)} km from the trail. Tap closer to the white line.` };
+  }
+  return { sectionId: d.section_id, km: Number(d.km), lat: d.snap_lat, lon: d.snap_lon };
 }
