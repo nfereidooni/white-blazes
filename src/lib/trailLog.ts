@@ -36,6 +36,8 @@ export type TrailLog = {
   rows: LogRow[];
   gaps: { from: number; to: number }[];
   unplaced: { id: string; date: string; name: string }[];
+  /** Set when a query failed, so the page can say so instead of looking empty. */
+  error: string | null;
 };
 
 /** "{[0.0,27.6),[43.0,83.8)}" → [[0, 27.6], [43, 83.8]] */
@@ -129,5 +131,6 @@ export async function getTrailLog(supabase: Supabase, slug: string): Promise<Tra
     rows,
     gaps,
     unplaced,
+    error: segRes.error?.message ?? progressRes.error?.message ?? filedRes.error?.message ?? null,
   };
 }

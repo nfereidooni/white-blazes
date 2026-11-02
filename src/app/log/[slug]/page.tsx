@@ -52,7 +52,14 @@ export default async function TrailLogPage({ params }: { params: Promise<{ slug:
             </div>
           </div>
 
-          {rows.length === 0 ? (
+          {log.error && (
+            <p className="error" role="alert">
+              Your hikes couldn&rsquo;t be loaded: {log.error}. If you&rsquo;ve just pulled new code, run{" "}
+              <code>npm run db:reset</code> to bring your database up to date.
+            </p>
+          )}
+
+          {log.error ? null : rows.length === 0 ? (
             <p className="muted">No placed hikes in {section.name} yet.</p>
           ) : (
             <div className="table-wrap">
