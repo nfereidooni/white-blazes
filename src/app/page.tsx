@@ -36,13 +36,14 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ y
 
   // Six queries in parallel. None of them says "where user_id = me":
   // Row Level Security adds that filter inside Postgres.
-  const [sectionsRes, progressRes, profileRes, hikesRes, segRes, clubsRes] = await Promise.all([
+  const [sectionsRes, progressRes, profileRes, hikesRes, segRes, clubsRes, newRes] = await Promise.all([
     supabase.from("sections").select("id, slug, name, length_km, club_badge_url").order("id"),
     supabase.from("section_progress").select("section_id, done_km, covered"),
     supabase.from("profiles").select("display_name, share_enabled, share_slug, goal, avatar_path").single(),
     supabase.from("hikes").select("id, hiked_on, name, walked_km, trail, section_id").order("hiked_on", { ascending: false }),
     supabase.from("hike_segments").select("hike_id, section_id, km, hikes!inner(start_point, end_point)"),
     supabase.from("profile_clubs").select("section_id"),
+    supabase.from("hike_new_km").select("hike_id, new_km"),
   ]);
 
   const progress = new Map(((progressRes.data ?? []) as Progress[]).map((p) => [p.section_id, p]));
@@ -73,12 +74,10 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ y
   segRows.forEach((r, i) => trailKm.set(r.hike_id, (trailKm.get(r.hike_id) ?? 0) + segments[i].to - segments[i].from));
   const placed = new Set(trailKm.keys());
 
-  // Calendar: km per day. Placed hikes count their trail km, others their walked distance.
+  // Calendar: new km of trail per day, from the hike_new_km view.
+  const newKm = new Map((newRes.data ?? []).map((r) => [r.hike_id as string, Number(r.new_km)]));
   const days = new Map<string, number>();
-  for (const h of hikes) {
-    const km = trailKm.get(h.id) ?? Number(h.walked_km ?? 0);
-    days.set(h.hiked_on, (days.get(h.hiked_on) ?? 0) + km);
-  }
+  for (const h of hikes) days.set(h.hiked_on, (days.get(h.hiked_on) ?? 0) + (newKm.get(h.id) ?? 0));
   const today = new Date().toLocaleDateString("en-CA", { timeZone: "America/Toronto" });
 
   // Calendar range: the past 12 months, or one calendar year from the chips.

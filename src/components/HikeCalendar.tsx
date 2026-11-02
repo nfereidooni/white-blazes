@@ -6,7 +6,7 @@ const level = (km: number) => (km <= 0 ? 1 : km < 8 ? 1 : km < 12 ? 2 : km < 16 
 
 /**
  * One square per day, a column per week (Monday on top), from `from` to
- * `to` (YYYY-MM-DD). Darker squares are days with more km on the trail.
+ * `to` (YYYY-MM-DD). Darker squares are days with more new km of trail.
  */
 export function HikeCalendar({ days, from, to }: { days: Map<string, number>; from: string; to: string }) {
   const end = new Date(`${to}T00:00:00Z`);
@@ -50,7 +50,7 @@ export function HikeCalendar({ days, from, to }: { days: Map<string, number>; fr
           {cells.map((c) => (
             <span
               key={c.date}
-              title={c.km === undefined ? c.date : `${c.date}: ${c.km.toFixed(1)} km`}
+              title={c.km === undefined ? c.date : `${c.date}: ${c.km.toFixed(1)} km of new trail`}
               style={{ background: LEVELS[c.km === undefined ? 0 : level(c.km)] }}
             />
           ))}
@@ -63,7 +63,7 @@ export function HikeCalendar({ days, from, to }: { days: Map<string, number>; fr
 export function CalendarLegend() {
   return (
     <div className="calendar-legend" aria-hidden="true">
-      <span>Fewer km</span>
+      <span>Less new trail</span>
       {LEVELS.map((c) => (
         <span key={c} className="swatch" style={{ background: c }} />
       ))}

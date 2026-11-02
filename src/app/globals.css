@@ -397,3 +397,32 @@ a.chip-on, a.chip-on:hover { color: var(--cream); }
 .map-columns > .stack { flex: 2 1 400px; }
 .facts { grid-template-columns: 6.5em minmax(0, 1fr); }
 .year-chips { display: flex; gap: 6px; flex-wrap: wrap; }
+
+/* Hikes tab: the log */
+.log-tools { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+.search { height: 42px; width: 220px; max-width: 100%; padding: 0 14px; border-radius: 10px; border: 1px solid #c9d3bd; background: var(--ground); font: 15px var(--font-sans), sans-serif; color: var(--ink); }
+.filter-chips { display: flex; gap: 6px; flex-wrap: wrap; }
+.filter-chips .chip { min-height: 42px; border-radius: 21px; display: inline-flex; align-items: center; gap: 6px; }
+.chip-count { font-family: var(--font-mono), monospace; font-size: 12px; font-weight: 500; opacity: 0.75; }
+.year-group { display: flex; flex-direction: column; }
+.year-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; border-bottom: 2px solid var(--ink); padding: 8px 0 6px; }
+.year-head h3 { margin: 0; font-family: var(--font-serif), Georgia, serif; font-weight: 400; font-size: 20px; }
+.log-rows { list-style: none; margin: 0; padding: 0; }
+.log-row { display: grid; grid-template-columns: 4.4em 36px minmax(0, 1fr) 6em 7.5em; gap: 14px; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--rule); color: var(--ink); text-decoration: none; font-weight: 400; }
+.log-row:hover { background: #f6f9f1; color: var(--ink); }
+.log-row:hover .log-name { text-decoration: underline; }
+.log-row > svg { display: block; }
+.badge-none { width: 36px; height: 36px; border-radius: 50%; border: 1.5px dashed #b9c9a6; display: block; }
+.log-main { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.log-name { font-weight: 600; font-size: 16px; }
+.log-meta { font-size: 13px; color: var(--muted); }
+.log-walked, .log-new { text-align: right; }
+.log-new { color: var(--forest-700); }
+@media (max-width: 600px) {
+  .log-row { grid-template-columns: 36px minmax(0, 1fr) auto; gap: 4px 12px; }
+  .log-date { grid-column: 1 / -1; }
+  .log-row > svg, .log-row > .badge-none { grid-row: 2 / span 2; }
+  .log-walked { grid-column: 3; grid-row: 2; }
+  .log-new { grid-column: 3; grid-row: 3; font-size: 12px; }
+  .search { width: 100%; }
+}

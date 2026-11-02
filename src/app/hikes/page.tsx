@@ -4,16 +4,25 @@ import { createClient } from "@/lib/supabase/server";
 import { getViewer } from "@/lib/viewer";
 import { SiteHeader, HeaderTitle } from "@/components/SiteHeader";
 import { Footer } from "@/components/Footer";
+import { HikeLog, type LogHike } from "./HikeLog";
 
-type Hike = { id: string; hiked_on: string; name: string; walked_km: number | null; trail: "main" | "side"; hike_segments: { hike_id: string }[] };
+type Row = {
+  id: string;
+  hiked_on: string;
+  name: string;
+  walked_km: number | null;
+  trail: "main" | "side";
+  section_id: number | null;
+  is_club_hike: boolean;
+  source: string;
+  notes: string | null;
+  hiked_with: string | null;
+  hike_leader: string | null;
+  start_point: string | null;
+  end_point: string | null;
+  hike_segments: { section_id: number }[];
+};
 
-const fmtDate = (iso: string) =>
-  new Date(`${iso}T12:00:00`).toLocaleDateString("en-CA", { month: "short", day: "numeric", year: "numeric" });
-
-/**
- * Every hike, newest first. The full Hikes tab (search, filters, year
- * groups, new km per hike) comes in a later stage; this is its frame.
- */
 export default async function HikesPage() {
   const supabase = await createClient();
   const {
@@ -21,12 +30,44 @@ export default async function HikesPage() {
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const [viewer, { data }] = await Promise.all([
+  // hike_new_km is a view: each hike's km of trail not covered by an earlier hike.
+  const [viewer, hikesRes, sectionsRes, newRes] = await Promise.all([
     getViewer(supabase, user),
-    supabase.from("hikes").select("id, hiked_on, name, walked_km, trail, hike_segments(hike_id)").order("hiked_on", { ascending: false }),
+    supabase
+      .from("hikes")
+      .select("id, hiked_on, name, walked_km, trail, section_id, is_club_hike, source, notes, hiked_with, hike_leader, start_point, end_point, hike_segments(section_id)")
+      .order("hiked_on", { ascending: false })
+      .order("created_at", { ascending: false }),
+    supabase.from("sections").select("id, slug, name"),
+    supabase.from("hike_new_km").select("hike_id, new_km"),
   ]);
-  const hikes = (data ?? []) as Hike[];
-  const walked = hikes.reduce((a, h) => a + Number(h.walked_km ?? 0), 0);
+
+  const sections = new Map((sectionsRes.data ?? []).map((s) => [s.id as number, s as { id: number; slug: string; name: string }]));
+  const newKm = new Map((newRes.data ?? []).map((r) => [r.hike_id as string, Number(r.new_km)]));
+  const rows = (hikesRes.data ?? []) as Row[];
+
+  const hikes: LogHike[] = rows.map((h) => {
+    const ids = [...new Set(h.hike_segments.map((g) => g.section_id))].sort((a, b) => a - b);
+    if (!ids.length && h.section_id) ids.push(h.section_id);
+    const names = ids.map((id) => sections.get(id)?.name).filter(Boolean) as string[];
+    const where = h.trail === "side" ? `${names.join(" and ") || "Side trail"} side trails` : names.join(" and ") || "Not placed yet";
+    return {
+      id: h.id,
+      date: h.hiked_on,
+      name: h.name,
+      walkedKm: h.walked_km != null ? Number(h.walked_km) : null,
+      newKm: newKm.get(h.id) ?? 0,
+      trail: h.trail,
+      placed: h.hike_segments.length > 0,
+      club: h.is_club_hike,
+      source: h.source,
+      badge: h.trail === "main" && ids.length ? (sections.get(ids[0])?.slug ?? null) : null,
+      sections: where,
+      // Everything search looks through, lowercased once here.
+      search: [h.name, where, h.notes, h.hiked_with, h.hike_leader, h.start_point, h.end_point, h.hiked_on].filter(Boolean).join(" ").toLowerCase(),
+    };
+  });
+  const walked = hikes.reduce((a, h) => a + (h.walkedKm ?? 0), 0);
 
   return (
     <div className="page">
@@ -53,30 +94,20 @@ export default async function HikesPage() {
               <span>Request your archive from Strava, then drop the .zip here. Hikes and walks with GPS come in for review.</span>
             </Link>
           </div>
+          <p className="hint">
+            Duplicates are caught by file, by Strava activity, and by same-day hikes over the same stretch. You can replace or
+            skip each one.
+          </p>
         </section>
 
         <section className="card" aria-labelledby="log-h">
-          <h2 id="log-h">Your hike log</h2>
-          {hikes.length === 0 ? (
-            <p className="muted">No hikes yet. Log your first one.</p>
-          ) : (
-            <ul className="hikes">
-              {hikes.map((hk) => (
-                <li key={hk.id}>
-                  <span className="mono muted">{fmtDate(hk.hiked_on)}</span>
-                  <Link href={`/hikes/${hk.id}/edit`} className="hike-name">
-                    {hk.name}
-                    {hk.trail === "side" && <span className="tag">side trail</span>}
-                    {hk.trail === "main" && !hk.hike_segments.length && <span className="tag tag-needs">needs placing</span>}
-                  </Link>
-                  <span className="mono">{hk.walked_km != null ? `${Number(hk.walked_km).toFixed(1)} km` : ""}</span>
-                </li>
-              ))}
-            </ul>
-          )}
-          <p className="hint">
-            <Link href="/settings">Download all my data</Link> as a spreadsheet.
-          </p>
+          <div className="card-head">
+            <h2 id="log-h">Your hike log</h2>
+            <a href="/api/export" className="small-link" download>
+              Download all my data
+            </a>
+          </div>
+          <HikeLog hikes={hikes} />
         </section>
       </main>
       <Footer />
