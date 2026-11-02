@@ -6,6 +6,8 @@ import { Logo } from "@/components/Logo";
 import { Ribbon, SectionList, totals, type SectionRow } from "@/components/TrailProgress";
 import { setSharing } from "./share-actions";
 import { Footer } from "@/components/Footer";
+import { Avatar } from "@/components/Avatar";
+import { avatarUrl } from "@/lib/avatar";
 
 type Section = { id: number; slug: string; name: string; length_km: number; club_badge_url: string };
 type Progress = { section_id: number; done_km: number };
@@ -25,15 +27,17 @@ export default async function Home() {
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  // Four queries in parallel. None of them says "where user_id = me":
+  // Six queries in parallel. None of them says "where user_id = me":
   // Row Level Security adds that filter inside Postgres.
-  const [sectionsRes, progressRes, profileRes, hikesRes, placedRes] = await Promise.all([
+  const [sectionsRes, progressRes, profileRes, hikesRes, placedRes, clubsRes] = await Promise.all([
     supabase.from("sections").select("id, slug, name, length_km, club_badge_url").order("id"),
     supabase.from("section_progress").select("section_id, done_km"),
-    supabase.from("profiles").select("display_name, share_enabled, share_slug").single(),
+    supabase.from("profiles").select("display_name, share_enabled, share_slug, goal, avatar_path").single(),
     supabase.from("hikes").select("id, hiked_on, name, walked_km, trail, section_id").order("hiked_on", { ascending: false }),
     supabase.from("hike_segments").select("hike_id"),
+    supabase.from("profile_clubs").select("section_id"),
   ]);
+  const homeClubs = new Set((clubsRes.data ?? []).map((r) => r.section_id as number));
 
   const progress = new Map(((progressRes.data ?? []) as Progress[]).map((p) => [p.section_id, Number(p.done_km)]));
   // Sections with any hikes filed in them get a link to their trail log.
@@ -43,13 +47,15 @@ export default async function Home() {
     length_km: Number(s.length_km),
     done_km: progress.get(s.id) ?? 0,
     logHref: (progress.get(s.id) ?? 0) > 0 || withHikes.has(s.id) ? `/log/${s.slug}` : undefined,
+    homeClub: homeClubs.has(s.id),
   }));
   const hikes = (hikesRes.data ?? []) as Hike[];
   // A main-trail hike with no segments hasn't been placed yet, so it adds no km.
   const placed = new Set((placedRes.data ?? []).map((r) => r.hike_id as string));
   const unplaced = hikes.filter((hk) => hk.trail === "main" && !placed.has(hk.id)).length;
   const profile = profileRes.data;
-  const name = profile?.display_name ?? user.email;
+  const name = profile?.display_name ?? user.email ?? "";
+  const photo = await avatarUrl(supabase, profile?.avatar_path);
   const { totalKm, doneKm, pct, started } = totals(sections);
 
   const h = await headers();
@@ -63,6 +69,7 @@ export default async function Home() {
           <Logo />
           <form action="/auth/signout" method="post" className="account">
             <Link href="/settings" className="account-name">
+              <Avatar url={photo} name={name} size={30} />
               {name}
             </Link>
             <button type="submit">Sign out</button>
@@ -77,6 +84,11 @@ export default async function Home() {
           <p className="sub">
             of {Math.round(totalKm)} km · <strong>{pct}% of the Bruce Trail</strong> · {started} of 9 sections started
           </p>
+          {profile?.goal && (
+            <p className="goal">
+              Goal: <strong>{profile.goal}</strong>
+            </p>
+          )}
           <div className="hero-actions">
             <Link href="/hikes/new" className="button-light">
               Log a hike
@@ -113,7 +125,7 @@ export default async function Home() {
               {profile?.share_enabled ? (
                 <>
                   <p className="muted">
-                    Anyone with this link can see your km per section. They can&rsquo;t see your hikes or dates.
+                    Anyone with this link can see your km per section. They can&rsquo;t see your hikes or dates. Choose whether to show your photo and goal in <Link href="/settings">settings</Link>.
                   </p>
                   <label htmlFor="share-url" className="sr-only">
                     Your share link

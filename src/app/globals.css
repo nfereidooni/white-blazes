@@ -255,3 +255,27 @@ h1, h2 { font-family: var(--font-serif), Georgia, serif; font-weight: 400; margi
   .hikes li > :first-child { grid-column: 1 / -1; }
   .field-row:not(.keep) { grid-template-columns: 1fr; }
 }
+
+/* Profile and settings */
+.avatar { border-radius: 50%; object-fit: cover; flex: none; display: inline-block; }
+.avatar-initials { display: inline-flex; align-items: center; justify-content: center; background: var(--forest-700); color: var(--cream); font-weight: 600; font-family: var(--font-sans), sans-serif; }
+.hero .avatar-initials { background: #3d5c45; }
+.account-name { display: inline-flex; align-items: center; gap: 8px; }
+.settings-h { font-size: 18px; margin: 28px 0 12px; }
+.card-title + .settings-h { margin-top: 4px; }
+.optional { font-weight: 400; font-size: 13px; color: var(--muted); margin-left: 6px; }
+.label { font-weight: 600; font-size: 15px; }
+.photo-row { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+.club-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 14px; }
+@media (max-width: 560px) { .club-grid { grid-template-columns: 1fr; } }
+.delete-confirm { display: flex; flex-direction: column; gap: 10px; max-width: 460px; }
+.delete-confirm p { margin: 0; }
+.delete-confirm label { font-size: 15px; }
+.delete-confirm input { height: 46px; padding: 0 12px; border-radius: 10px; border: 1px solid #e2b8ad; background: var(--ground); font: 16px var(--font-sans), sans-serif; color: var(--ink); }
+.goal { margin: 10px 0 0; color: var(--sage); font-size: 15px; }
+.goal strong { color: var(--cream); font-weight: 600; }
+.tag-club { color: var(--forest-700); background: #e3eedc; }
+.share-person { display: flex; align-items: center; gap: 14px; }
+.notice { background: #e3eedc; color: var(--forest-700); border-radius: 10px; padding: 10px 14px; font-size: 15px; margin: 0 0 16px; }
+.settings-photo { margin-bottom: 18px; }
+.settings-h + .muted { margin-top: 0; }

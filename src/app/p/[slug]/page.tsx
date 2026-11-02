@@ -5,6 +5,8 @@ import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { Logo } from "@/components/Logo";
 import { Footer } from "@/components/Footer";
+import { Avatar } from "@/components/Avatar";
+import { avatarUrl } from "@/lib/avatar";
 import { Ribbon, SectionList, totals, type SectionRow } from "@/components/TrailProgress";
 
 type Row = { display_name: string | null; section_id: number; section_name: string; length_km: number; done_km: number };
@@ -14,7 +16,11 @@ type Row = { display_name: string | null; section_id: number; section_name: stri
 // cache() lets the page and its metadata share one database call.
 const load = cache(async (slug: string) => {
   const supabase = await createClient();
-  const { data } = await supabase.rpc("shared_progress", { slug });
+  const [{ data }, { data: person }] = await Promise.all([
+    supabase.rpc("shared_progress", { slug }),
+    // Photo and goal come back only if the owner chose to show them.
+    supabase.rpc("shared_profile", { slug }).maybeSingle<{ goal: string | null; avatar_path: string | null }>(),
+  ]);
   const rows = (data ?? []) as Row[];
   if (!rows.length) return null;
   const sections: SectionRow[] = rows.map((r) => ({
@@ -23,7 +29,12 @@ const load = cache(async (slug: string) => {
     length_km: Number(r.length_km),
     done_km: Number(r.done_km),
   }));
-  return { name: rows[0].display_name ?? "A hiker", sections };
+  return {
+    name: rows[0].display_name ?? "A hiker",
+    goal: person?.goal ?? null,
+    photo: await avatarUrl(supabase, person?.avatar_path),
+    sections,
+  };
 });
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
@@ -51,7 +62,10 @@ export default async function SharedProgressPage({ params }: { params: Promise<{
           </Link>
         </div>
         <div className="hero-body">
-          <p className="eyebrow">{data.name}&rsquo;s Bruce Trail</p>
+          <div className="share-person">
+            {data.photo && <Avatar url={data.photo} name={data.name} size={56} />}
+            <p className="eyebrow">{data.name}&rsquo;s Bruce Trail</p>
+          </div>
           <h1>
             {doneKm.toFixed(1)}
             <span> km</span>
@@ -59,6 +73,11 @@ export default async function SharedProgressPage({ params }: { params: Promise<{
           <p className="sub">
             of {Math.round(totalKm)} km · <strong>{pct}% of the Bruce Trail</strong> · {started} of 9 sections started
           </p>
+          {data.goal && (
+            <p className="goal">
+              Goal: <strong>{data.goal}</strong>
+            </p>
+          )}
         </div>
       </header>
 

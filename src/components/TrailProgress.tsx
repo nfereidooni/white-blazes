@@ -9,6 +9,8 @@ export type SectionRow = {
   club_badge_url?: string;
   /** Link to this section's trail log, when there's anything to log. */
   logHref?: string;
+  /** One of the clubs this person belongs to. */
+  homeClub?: boolean;
   done_km: number;
 };
 
@@ -38,7 +40,10 @@ export function SectionList({ sections }: { sections: SectionRow[] }) {
         return (
           <li key={s.id}>
             <div className="row">
-              <span className="name">{s.name}</span>
+              <span className="name">
+                {s.name}
+                {s.homeClub && <span className="tag tag-club">your club</span>}
+              </span>
               <span className="mono">
                 {s.done_km.toFixed(1)} of {Number(s.length_km)} km · {Math.round(f * 100)}%
               </span>

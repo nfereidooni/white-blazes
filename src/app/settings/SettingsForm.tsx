@@ -10,7 +10,23 @@ const GAP_OPTIONS = [
   { value: 0, label: "Off", hint: "Only exactly what your tracks show counts. Tiny holes may keep a section under 100%." },
 ];
 
-export function SettingsForm({ displayName, gapFillM }: { displayName: string; gapFillM: number }) {
+export type Club = { id: number; name: string };
+
+export function SettingsForm({
+  displayName,
+  goal,
+  gapFillM,
+  shareProfile,
+  clubs,
+  myClubs,
+}: {
+  displayName: string;
+  goal: string;
+  gapFillM: number;
+  shareProfile: boolean;
+  clubs: Club[];
+  myClubs: number[];
+}) {
   const [state, action, pending] = useActionState<SettingsState, FormData>(saveSettings, {});
 
   return (
@@ -20,6 +36,40 @@ export function SettingsForm({ displayName, gapFillM }: { displayName: string; g
         <input id="display_name" name="display_name" required maxLength={80} defaultValue={displayName} />
         <p className="hint">Shown on your share page.</p>
       </div>
+
+      <div className="field">
+        <label htmlFor="goal">
+          Your goal <span className="optional">optional</span>
+        </label>
+        <input id="goal" name="goal" maxLength={120} defaultValue={goal} placeholder="End to end by 2028" />
+        <p className="hint">Shown above your progress.</p>
+      </div>
+
+      <fieldset className="field">
+        <legend>
+          Home clubs <span className="optional">optional</span>
+        </legend>
+        <p className="hint">The Bruce Trail clubs you&rsquo;re a member of. Pick as many as you like.</p>
+        <div className="club-grid">
+          {clubs.map((c) => (
+            <label key={c.id} className="choice">
+              <input type="checkbox" name="clubs" value={c.id} defaultChecked={myClubs.includes(c.id)} />
+              {c.name}
+            </label>
+          ))}
+        </div>
+      </fieldset>
+
+      <fieldset className="field">
+        <legend>Share page</legend>
+        <label className="choice choice-top">
+          <input type="checkbox" name="share_profile" defaultChecked={shareProfile} />
+          <span>
+            <strong>Show my photo and goal</strong>
+            <span className="hint block">Only applies while your share link is on.</span>
+          </span>
+        </label>
+      </fieldset>
 
       <fieldset className="field">
         <legend>Fill small gaps in your tracks</legend>

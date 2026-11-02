@@ -6,7 +6,7 @@ import { Logo } from "@/components/Logo";
 export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string }>;
+  searchParams: Promise<{ error?: string; deleted?: string }>;
 }) {
   const supabase = await createClient();
   const {
@@ -14,12 +14,17 @@ export default async function LoginPage({
   } = await supabase.auth.getUser();
   if (user) redirect("/");
 
-  const { error } = await searchParams;
+  const { error, deleted } = await searchParams;
 
   return (
     <main className="login">
       <div className="login-card">
         <Logo size={22} onLight className="login-logo" />
+        {deleted && (
+          <p className="notice" role="status">
+            Your account and all your hikes have been deleted.
+          </p>
+        )}
         <p className="lede">
           White Blazes tracks your hikes on the Bruce Trail, Niagara to Tobermory. Log where you&rsquo;ve
           hiked and see how much of the trail you&rsquo;ve covered, section by section.
