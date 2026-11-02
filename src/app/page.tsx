@@ -9,7 +9,7 @@ import { Footer } from "@/components/Footer";
 
 type Section = { id: number; slug: string; name: string; length_km: number; club_badge_url: string };
 type Progress = { section_id: number; done_km: number };
-type Hike = { id: string; hiked_on: string; name: string; walked_km: number | null; trail: "main" | "side" };
+type Hike = { id: string; hiked_on: string; name: string; walked_km: number | null; trail: "main" | "side"; section_id: number | null };
 
 const fmtDate = (iso: string) =>
   new Date(`${iso}T12:00:00`).toLocaleDateString("en-CA", { month: "short", day: "numeric", year: "numeric" });
@@ -31,15 +31,18 @@ export default async function Home() {
     supabase.from("sections").select("id, slug, name, length_km, club_badge_url").order("id"),
     supabase.from("section_progress").select("section_id, done_km"),
     supabase.from("profiles").select("display_name, share_enabled, share_slug").single(),
-    supabase.from("hikes").select("id, hiked_on, name, walked_km, trail").order("hiked_on", { ascending: false }),
+    supabase.from("hikes").select("id, hiked_on, name, walked_km, trail, section_id").order("hiked_on", { ascending: false }),
     supabase.from("hike_segments").select("hike_id"),
   ]);
 
   const progress = new Map(((progressRes.data ?? []) as Progress[]).map((p) => [p.section_id, Number(p.done_km)]));
+  // Sections with any hikes filed in them get a link to their trail log.
+  const withHikes = new Set(((hikesRes.data ?? []) as Hike[]).map((h) => h.section_id));
   const sections: SectionRow[] = ((sectionsRes.data ?? []) as Section[]).map((s) => ({
     ...s,
     length_km: Number(s.length_km),
     done_km: progress.get(s.id) ?? 0,
+    logHref: (progress.get(s.id) ?? 0) > 0 || withHikes.has(s.id) ? `/log/${s.slug}` : undefined,
   }));
   const hikes = (hikesRes.data ?? []) as Hike[];
   // A main-trail hike with no segments hasn't been placed yet, so it adds no km.

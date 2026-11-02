@@ -7,6 +7,8 @@ export type SectionRow = {
   name: string;
   length_km: number;
   club_badge_url?: string;
+  /** Link to this section's trail log, when there's anything to log. */
+  logHref?: string;
   done_km: number;
 };
 
@@ -44,10 +46,15 @@ export function SectionList({ sections }: { sections: SectionRow[] }) {
             <div className="meter">
               <div style={{ width: `${f * 100}%` }} />
             </div>
-            {s.club_badge_url && (
-              <a href={s.club_badge_url} target="_blank" rel="noopener noreferrer">
-                {s.name} club badges<span className="sr-only"> (opens in a new tab)</span>
-              </a>
+            {(s.club_badge_url || s.logHref) && (
+              <div className="section-links">
+                {s.logHref && <a href={s.logHref}>Trail log</a>}
+                {s.club_badge_url && (
+                  <a href={s.club_badge_url} target="_blank" rel="noopener noreferrer">
+                    {s.name} club badges<span className="sr-only"> (opens in a new tab)</span>
+                  </a>
+                )}
+              </div>
             )}
           </li>
         );

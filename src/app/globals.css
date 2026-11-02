@@ -67,7 +67,8 @@ h1, h2 { font-family: var(--font-serif), Georgia, serif; font-weight: 400; margi
 .sections li { padding: 14px 0; border-top: 1px solid var(--rule); display: flex; flex-direction: column; gap: 8px; }
 .sections .row { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; }
 .sections .name { font-family: var(--font-serif), Georgia, serif; font-size: 19px; }
-.sections a { font-size: 14px; align-self: flex-start; }
+.sections a { font-size: 14px; }
+.section-links { display: flex; gap: 16px; flex-wrap: wrap; }
 .meter { height: 10px; border-radius: 5px; background: var(--track); overflow: hidden; }
 
 .hikes li { display: grid; grid-template-columns: 7.5em minmax(0, 1fr) auto; gap: 12px; align-items: baseline; padding: 10px 0; border-top: 1px solid var(--rule); font-size: 15px; }
@@ -218,6 +219,31 @@ h1, h2 { font-family: var(--font-serif), Georgia, serif; font-weight: 400; margi
 .coords { margin: 0; display: grid; grid-template-columns: auto 1fr; gap: 2px 12px; font-size: 14px; }
 .coords dt { color: var(--muted); }
 .coords dd { margin: 0; user-select: all; }
+
+/* Trail log */
+.eyebrow-dark { margin: 0; font-family: var(--font-mono), monospace; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--forest-600); }
+.log-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; flex-wrap: wrap; }
+.log-head .muted { margin: 4px 0 0; }
+.table-wrap { overflow-x: auto; }
+.log-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.log-table th { text-align: left; font-weight: 700; padding: 8px 10px; border-bottom: 2px solid var(--ink); white-space: nowrap; }
+.log-table td { padding: 10px; border-bottom: 1px solid var(--rule); vertical-align: top; }
+.log-table .num { text-align: right; font-family: var(--font-mono), monospace; }
+.log-table .nowrap { white-space: nowrap; }
+.km-note { display: block; font-family: var(--font-mono), monospace; font-size: 12px; color: var(--muted); }
+.log-cols { display: flex; flex-wrap: wrap; gap: 24px 48px; }
+.log-cols h2 { font-size: 18px; margin-bottom: 6px; }
+.log-cols ul { margin: 0; padding-left: 18px; line-height: 1.7; }
+
+@media print {
+  .no-print { display: none !important; }
+  body, .page { background: #fff; }
+  .content { margin: 0; padding: 0; max-width: none; }
+  .trail-log .card { border: 0; padding: 0; }
+  .log-table { font-size: 11pt; }
+  .fineprint { color: #333; }
+  a { color: inherit; text-decoration: none; }
+}
 
 @media (max-width: 600px) {
   .bar, .hero-body, .content { padding-left: 16px; padding-right: 16px; }
