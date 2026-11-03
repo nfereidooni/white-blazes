@@ -31,10 +31,13 @@ export function TrailMap({
   sections,
   selectedId,
   gap,
+  interactive = true,
 }: {
   sections: MapSection[];
   selectedId: number | null;
   gap: { sectionId: number; from: number; to: number } | null;
+  /** Off on share pages: no tapping through to sections, nothing outlined. */
+  interactive?: boolean;
 }) {
   const box = useRef<HTMLDivElement>(null);
   const map = useRef<MlMap | null>(null);
@@ -88,13 +91,15 @@ export function TrailMap({
         // A wide invisible line makes the trail easy to tap.
         m.addLayer({ id: "trail-hit", type: "line", source: "trail", paint: { "line-color": "#000", "line-width": 18, "line-opacity": 0 } });
 
-        m.on("mouseenter", "trail-hit", () => (m.getCanvas().style.cursor = "pointer"));
-        m.on("mouseleave", "trail-hit", () => (m.getCanvas().style.cursor = ""));
-        m.on("click", "trail-hit", (e) => {
-          const id = e.features?.[0]?.properties?.section_id as number | undefined;
-          const slug = id != null ? slugById.current.get(id) : undefined;
-          if (slug) router.push(`/map?s=${slug}`, { scroll: false });
-        });
+        if (interactive) {
+          m.on("mouseenter", "trail-hit", () => (m.getCanvas().style.cursor = "pointer"));
+          m.on("mouseleave", "trail-hit", () => (m.getCanvas().style.cursor = ""));
+          m.on("click", "trail-hit", (e) => {
+            const id = e.features?.[0]?.properties?.section_id as number | undefined;
+            const slug = id != null ? slugById.current.get(id) : undefined;
+            if (slug) router.push(`/map?s=${slug}`, { scroll: false });
+          });
+        }
         if (!cancelled) setReady(true);
       });
     })();
@@ -118,7 +123,12 @@ export function TrailMap({
 
   return (
     <div className="trail-map">
-      <div ref={box} className="map-box map-box-tall" aria-label="Map of the Bruce Trail with the stretches you've hiked" role="region" />
+      <div
+        ref={box}
+        className={interactive ? "map-box map-box-tall" : "map-box map-box-share"}
+        aria-label="Map of the Bruce Trail with the hiked stretches in dark green"
+        role="region"
+      />
       {!ready && <p className="map-loading-note">Loading the map…</p>}
       <button type="button" className="map-whole secondary" onClick={() => map.current?.fitBounds(WHOLE_TRAIL, { padding: 20, duration: 600 })}>
         Whole trail

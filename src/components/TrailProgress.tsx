@@ -1,6 +1,6 @@
 /**
- * The whole-trail ribbon and the per-section list. Used on the home page and
- * on public share pages, so it only takes plain numbers.
+ * The whole-trail ribbon and progress totals. Used on the home page and on
+ * public share pages, so it only takes plain numbers.
  */
 export type SectionRow = {
   id: number;
@@ -29,42 +29,6 @@ export function Ribbon({ sections }: { sections: SectionRow[] }) {
         <span>Tobermory</span>
       </div>
     </>
-  );
-}
-
-export function SectionList({ sections }: { sections: SectionRow[] }) {
-  return (
-    <ul className="sections">
-      {sections.map((s) => {
-        const f = Math.min(1, s.done_km / s.length_km);
-        return (
-          <li key={s.id}>
-            <div className="row">
-              <span className="name">
-                {s.name}
-                {s.homeClub && <span className="tag tag-club">your club</span>}
-              </span>
-              <span className="mono">
-                {s.done_km.toFixed(1)} of {Number(s.length_km)} km · {Math.round(f * 100)}%
-              </span>
-            </div>
-            <div className="meter">
-              <div style={{ width: `${f * 100}%` }} />
-            </div>
-            {(s.club_badge_url || s.logHref) && (
-              <div className="section-links">
-                {s.logHref && <a href={s.logHref}>View or download trail log</a>}
-                {s.club_badge_url && (
-                  <a href={s.club_badge_url} target="_blank" rel="noopener noreferrer">
-                    {s.name} club badges<span className="sr-only"> (opens in a new tab)</span>
-                  </a>
-                )}
-              </div>
-            )}
-          </li>
-        );
-      })}
-    </ul>
   );
 }
 
