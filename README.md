@@ -20,4 +20,13 @@ npm run dev
 
 Notes on how it's built are in [`docs/`](docs/).
 
-Trail data © OpenStreetMap contributors, ODbL.
+## License
+
+The code is under the [MIT License](LICENSE).
+
+That covers the code only:
+
+- The trail line is © OpenStreetMap contributors, available under the [Open Database License](https://www.openstreetmap.org/copyright).
+- The section badge illustrations aren't covered by the MIT License.
+
+White Blazes isn't affiliated with or endorsed by the Bruce Trail Conservancy.
