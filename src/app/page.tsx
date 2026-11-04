@@ -8,7 +8,7 @@ import { SiteHeader } from "@/components/SiteHeader";
 import { Footer } from "@/components/Footer";
 import { Ribbon, totals, type SectionRow } from "@/components/TrailProgress";
 import { BadgeRing } from "@/components/Badge";
-import { HikeCalendar, CalendarLegend } from "@/components/HikeCalendar";
+import { HikeCalendar, CalendarLegend, type CalendarDays } from "@/components/HikeCalendar";
 import { setSharing } from "./share-actions";
 
 type Section = { id: number; slug: string; name: string; length_km: number; club_badge_url: string };
@@ -74,10 +74,17 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ y
   segRows.forEach((r, i) => trailKm.set(r.hike_id, (trailKm.get(r.hike_id) ?? 0) + segments[i].to - segments[i].from));
   const placed = new Set(trailKm.keys());
 
-  // Calendar: new km of trail per day, from the hike_new_km view.
   const newKm = new Map((newRes.data ?? []).map((r) => [r.hike_id as string, Number(r.new_km)]));
-  const days = new Map<string, number>();
-  for (const h of hikes) days.set(h.hiked_on, (days.get(h.hiked_on) ?? 0) + (newKm.get(h.id) ?? 0));
+  // Calendar: each day's hikes, for the squares' shading and hover details.
+  const days: CalendarDays = {};
+  for (const h of hikes) {
+    (days[h.hiked_on] ??= []).push({
+      id: h.id,
+      name: h.name,
+      newKm: newKm.get(h.id) ?? 0,
+      walkedKm: h.walked_km != null ? Number(h.walked_km) : null,
+    });
+  }
   const today = new Date().toLocaleDateString("en-CA", { timeZone: "America/Toronto" });
 
   // Calendar range: the past 12 months, or one calendar year from the chips.
