@@ -42,7 +42,7 @@ export default async function EditHikePage({ params }: { params: Promise<{ id: s
     .join(", then ");
 
   return (
-    <PageShell title="Edit hike" eyebrow="Hikes" tab="hikes">
+    <PageShell title="Edit hike" eyebrow="Hike log" tab="hikes">
       {!canEditRange && (
         <p className="hint">
           This hike came from {SOURCE_LABEL[hike.source] ?? hike.source}, so where it went on the trail comes from its

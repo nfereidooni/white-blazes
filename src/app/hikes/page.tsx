@@ -74,7 +74,7 @@ export default async function HikesPage() {
       <SiteHeader active="hikes" name={viewer.name} photo={viewer.photo}>
         <HeaderTitle
           eyebrow={`${hikes.length} ${hikes.length === 1 ? "hike" : "hikes"} · ${Math.round(walked)} km walked`}
-          title="Hikes"
+          title="Hike log"
         />
       </SiteHeader>
       <main className="content content-inner">
@@ -102,7 +102,7 @@ export default async function HikesPage() {
 
         <section className="card" aria-labelledby="log-h">
           <div className="card-head">
-            <h2 id="log-h">Your hike log</h2>
+            <h2 id="log-h">Your hikes</h2>
             <a href="/api/export" className="small-link" download>
               Download all my data
             </a>

@@ -9,7 +9,7 @@ export default async function NewHikePage({ searchParams }: { searchParams: Prom
   const { data: sections } = await supabase.from("sections").select("id, name, length_km").order("id");
 
   return (
-    <PageShell title="Log a hike" eyebrow="Hikes" tab="hikes">
+    <PageShell title="Log a hike" eyebrow="Hike log" tab="hikes">
       <HikeForm
         action={createHike}
         sections={sections ?? []}

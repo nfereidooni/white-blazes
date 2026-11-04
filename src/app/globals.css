@@ -494,3 +494,32 @@ a.chip-on, a.chip-on:hover { color: var(--cream); }
 .tip-hike { display: flex; flex-direction: column; }
 .tip-hike + .tip-hike { margin-top: 4px; }
 .tip-km { font-size: 12px; }
+
+/* Links styled as buttons keep their text colour on hover */
+a.primary, a.primary:hover, .primary:hover { color: var(--cream); }
+a.button-light:hover { color: var(--forest-900); }
+
+/* Account menu */
+.account-menu { position: relative; }
+button.avatar-link { padding: 0; border: 0; background: transparent; cursor: pointer; }
+.account-list { position: absolute; right: 0; top: calc(100% + 8px); z-index: 40; min-width: 200px; padding: 6px; border-radius: 12px; background: var(--paper); border: 1px solid var(--line); box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25); display: flex; flex-direction: column; }
+.account-who { margin: 0; padding: 8px 12px 6px; font-size: 13px; color: var(--muted); border-bottom: 1px solid var(--rule); margin-bottom: 4px; }
+.account-list a, .account-list button { display: flex; align-items: center; min-height: 40px; padding: 0 12px; border-radius: 8px; font: 600 15px var(--font-sans), sans-serif; color: var(--ink); text-decoration: none; background: transparent; border: 0; width: 100%; cursor: pointer; text-align: left; }
+.account-list a:hover, .account-list button:hover { background: var(--ground); color: var(--ink); }
+.account-list form { margin: 0; }
+
+/* Map overview */
+.overview-list { list-style: none; margin: 0; padding: 0; }
+.overview-row { display: grid; grid-template-columns: 36px minmax(0, 1fr) auto; grid-template-rows: auto auto; gap: 2px 12px; align-items: center; padding: 8px 0; border-top: 1px solid var(--rule); color: var(--ink); text-decoration: none; font-weight: 400; }
+.overview-row > svg { grid-row: 1 / span 2; }
+.overview-row:hover { background: #f6f9f1; color: var(--ink); }
+.overview-name { font-weight: 600; }
+.overview-meter { grid-column: 2 / span 2; height: 6px; display: block; }
+.overview-meter > span { display: block; height: 100%; background: var(--forest-600); }
+
+/* Long-form pages (privacy) */
+.prose { gap: 10px; font-size: 16px; line-height: 1.6; }
+.prose h2 { font-size: 22px; margin-top: 14px; }
+.prose p, .prose ul { margin: 0; }
+.prose ul { padding-left: 20px; display: flex; flex-direction: column; gap: 6px; }
+.footer-legal { margin-top: -8px; }

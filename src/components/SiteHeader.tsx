@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Logo } from "./Logo";
-import { Avatar } from "./Avatar";
+import { AccountMenu } from "./AccountMenu";
 import { Forest } from "./Forest";
 
 export type Tab = "home" | "map" | "hikes" | "none";
@@ -8,11 +8,11 @@ export type Tab = "home" | "map" | "hikes" | "none";
 const TABS: { key: Tab; label: string; href: string }[] = [
   { key: "home", label: "Home", href: "/" },
   { key: "map", label: "Map", href: "/map" },
-  { key: "hikes", label: "Hikes", href: "/hikes" },
+  { key: "hikes", label: "Hike log", href: "/hikes" },
 ];
 
 /**
- * The dark forest header: logo, tabs (Home, Map, Hikes) and your avatar (which opens settings).
+ * The dark forest header: logo, tabs (Home, Map, Hike log) and your avatar, which opens a menu with Settings and Sign out.
  * The hero content below the bar (big km number, page title) is passed in
  * as children, so every page shares one frame.
  */
@@ -43,9 +43,7 @@ export function SiteHeader({
             </Link>
           ))}
         </nav>
-        <Link href="/settings" className="avatar-link" aria-label={`Settings for ${name}`}>
-          <Avatar url={photo} name={name} size={44} />
-        </Link>
+        <AccountMenu name={name} photo={photo} />
       </div>
       {children}
     </header>

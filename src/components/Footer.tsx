@@ -1,3 +1,4 @@
+import Link from "next/link";
 const BTC = {
   donate: "https://brucetrail.org/donations/",
   member: "https://brucetrail.org/become-a-member/",
@@ -24,18 +25,22 @@ export function Footer() {
         </div>
       </div>
       <p className="fineprint">
-        Trail line from OpenStreetMap, October 2026, and not for navigation. On the trail, use the{" "}
+        White Blazes isn&rsquo;t affiliated with or endorsed by the Bruce Trail Conservancy. The trail line comes from
+        OpenStreetMap (October 2026), and km are measured along it and scaled to the Conservancy&rsquo;s published section
+        lengths, so they can differ from the Bruce Trail Reference. It&rsquo;s not for navigation: on the trail, use the{" "}
         <a href={BTC.app} target="_blank" rel="noopener noreferrer">
           Bruce Trail App
           <NewTab />
         </a>{" "}
-        for the official route and closures. White Blazes isn&rsquo;t affiliated with the Bruce Trail Conservancy. Trail
-        data ©{" "}
+        for the official route and closures. Trail data ©{" "}
         <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">
           OpenStreetMap contributors
           <NewTab />
         </a>
-        .
+        , available under the Open Database License.
+      </p>
+      <p className="fineprint footer-legal">
+        © {new Date().getFullYear()} Niki Fereidooni · <Link href="/privacy">Privacy</Link>
       </p>
     </footer>
   );
