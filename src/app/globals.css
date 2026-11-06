@@ -551,3 +551,9 @@ button.avatar-link { padding: 0; border: 0; background: transparent; cursor: poi
 .log-banner { margin: 0; padding: 12px 16px; border-radius: 12px; font-size: 15px; line-height: 1.5; }
 .log-banner-ready { background: #eef4e4; border: 1px solid var(--moss); }
 .badge-block.wb-gold { background: linear-gradient(135deg, #f9e08a 0%, #e8b730 42%, #c98f12 78%, #e3ad2c 100%); border-color: #a8740c; }
+
+/* Google button: white with the G mark, per Google's sign-in branding. */
+.login-form button.google-button { display: flex; align-items: center; justify-content: center; gap: 10px; background: #fff; color: #1f1f1f; border: 1px solid #c9d3bd; font-weight: 600; }
+.login-form button.google-button:hover { background: #f4f6f0; }
+.login .or { display: flex; align-items: center; gap: 12px; margin: 14px 0 2px; color: var(--muted, #6b7466); font-size: 14px; }
+.login .or::before, .login .or::after { content: ""; flex: 1; height: 1px; background: #d9dfd0; }

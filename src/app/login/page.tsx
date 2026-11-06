@@ -32,7 +32,7 @@ export default async function LoginPage({
           hiked and see how much of the trail you&rsquo;ve covered, section by section.
         </p>
         <h1>Sign in</h1>
-        <p className="lede">Enter your email to get a magic link to log in.</p>
+        <p className="lede">Use Google, or get a sign-in link by email.</p>
         <LoginForm error={error} />
       </div>
     </main>

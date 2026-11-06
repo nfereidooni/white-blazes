@@ -1,6 +1,7 @@
 "use server";
 
 import { headers } from "next/headers";
+import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 
 export type LoginState = { status: "idle" | "sent" | "error"; message?: string };
@@ -29,4 +30,21 @@ export async function sendMagicLink(_prev: LoginState, formData: FormData): Prom
     return { status: "error", message: error.message };
   }
   return { status: "sent", message: email };
+}
+
+/**
+ * Sign in with Google. Supabase hands back a Google URL; we send the browser
+ * there. Google sends it back to Supabase, and Supabase sends it to
+ * /auth/confirm with a one-time code, the same route the magic link uses.
+ * If the Google email matches an existing account, Supabase links the two.
+ */
+export async function signInWithGoogle() {
+  const origin = (await headers()).get("origin") ?? "http://127.0.0.1:3000";
+  const supabase = await createClient();
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    provider: "google",
+    options: { redirectTo: `${origin}/auth/confirm` },
+  });
+  if (error || !data.url) redirect("/login?error=google");
+  redirect(data.url);
 }
