@@ -14,6 +14,7 @@ import { SiteHeader, HeaderTitle } from "@/components/SiteHeader";
 import { Footer } from "@/components/Footer";
 import { Badge } from "@/components/Badge";
 import { TrailMap } from "@/components/TrailMap";
+import { BadgeForm } from "../badges/BadgeForm";
 
 type Section = {
   id: number;
@@ -72,7 +73,7 @@ export default async function MapPage({
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const [viewer, sectionsRes, progressRes, segRes, clubsRes] =
+  const [viewer, sectionsRes, progressRes, segRes, clubsRes, badgesRes] =
     await Promise.all([
       getViewer(supabase, user),
       supabase
@@ -88,13 +89,16 @@ export default async function MapPage({
           "section_id, km, hikes!inner(id, name, hiked_on, start_point, end_point)",
         ),
       supabase.from("profile_clubs").select("section_id"),
-    ]);
+      supabase.from("badge_awards").select("section_id, received_on"),
+  ]);
 
   const sections = (sectionsRes.data ?? []) as Section[];
   const progress = new Map(
     (progressRes.data ?? []).map((p) => [p.section_id as number, p]),
   );
   const segRows = (segRes.data ?? []) as unknown as SegRow[];
+  const badges = new Map((badgesRes.data ?? []).map((b) => [b.section_id as number, b.received_on as string]));
+  const today = new Date().toLocaleDateString("en-CA", { timeZone: "America/Toronto" });
   const homeClubs = new Set(
     (clubsRes.data ?? []).map((r) => r.section_id as number),
   );
@@ -323,6 +327,14 @@ export default async function MapPage({
                     </span>
                   </div>
                 </div>
+
+                <BadgeForm
+                  sectionId={chosen.id}
+                  sectionName={chosen.name}
+                  complete={sec.doneKm >= sec.lengthKm * 0.995}
+                  receivedOn={badges.get(chosen.id) ?? null}
+                  today={today}
+                />
 
                 <dl className="facts">
                   <dt>Runs</dt>

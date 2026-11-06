@@ -152,15 +152,39 @@ export function Badge({ kind, size = 80 }: { kind: string; size?: number }) {
   );
 }
 
-/** The badge inside a progress ring. Faded until the section is finished. */
-export function BadgeRing({ kind, fraction, size = 104 }: { kind: string; fraction: number; size?: number }) {
+export type BadgeStatus = "progress" | "complete" | "received";
+
+/** Which of the three looks a section's badge gets. */
+export const badgeStatus = (fraction: number, received: boolean): BadgeStatus =>
+  received ? "received" : fraction >= 0.995 ? "complete" : "progress";
+
+/**
+ * The badge inside a progress ring.
+ * - progress: faded art, the ring fills as you go
+ * - complete: full colour, a full green ring and a check mark
+ * - received: full colour inside a gold ring
+ */
+export function BadgeRing({
+  kind,
+  fraction,
+  size = 104,
+  status,
+}: {
+  kind: string;
+  fraction: number;
+  size?: number;
+  status?: BadgeStatus;
+}) {
   const f = Math.max(0, Math.min(1, fraction));
+  const st = status ?? badgeStatus(f, false);
   const inner = Math.round(size * 0.77);
+  const ring = st === "received" ? "#a8740c" : "#3d6b45";
+  const full = st !== "progress";
   return (
     <div className="badge-ring" style={{ width: size, height: size }}>
       <svg viewBox="0 0 104 104" width={size} height={size} aria-hidden="true">
-        <circle cx="52" cy="52" r="48" fill="none" stroke="#dbe4cf" strokeWidth="6" />
-        {f > 0 && (
+        <circle cx="52" cy="52" r="48" fill="none" stroke={full ? ring : "#dbe4cf"} strokeWidth="6" />
+        {!full && f > 0 && (
           <circle
             cx="52"
             cy="52"
@@ -174,9 +198,16 @@ export function BadgeRing({ kind, fraction, size = 104 }: { kind: string; fracti
           />
         )}
       </svg>
-      <span className={f >= 0.995 ? "badge-art" : "badge-art badge-faded"}>
+      <span className={full ? "badge-art" : "badge-art badge-faded"}>
         <Badge kind={kind} size={inner} />
       </span>
+      {st === "complete" && (
+        <span className="badge-check" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="60%" height="60%">
+            <path d="M5 12.5 L10 17 L19 7" fill="none" stroke="#f7f5ee" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </span>
+      )}
     </div>
   );
 }

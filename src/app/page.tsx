@@ -7,7 +7,7 @@ import { closestGap, parseMulti, parseRange, type Segment } from "@/lib/gaps";
 import { SiteHeader } from "@/components/SiteHeader";
 import { Footer } from "@/components/Footer";
 import { Ribbon, totals, type SectionRow } from "@/components/TrailProgress";
-import { BadgeRing } from "@/components/Badge";
+import { BadgeRing, badgeStatus } from "@/components/Badge";
 import { HikeCalendar, CalendarLegend, type CalendarDays } from "@/components/HikeCalendar";
 import { setSharing } from "./share-actions";
 
@@ -21,6 +21,7 @@ const short = (iso: string) => `${MONTHS[Number(iso.slice(5, 7)) - 1]} ${Number(
 const longMonth = (iso: string) =>
   new Date(`${iso}T12:00:00`).toLocaleDateString("en-CA", { month: "long", year: "numeric" });
 const km1 = (n: number) => n.toFixed(1);
+const monthYear = (iso: string) => new Date(`${iso}T12:00:00`).toLocaleDateString("en-CA", { month: "short", year: "numeric" });
 
 export default async function Home({ searchParams }: { searchParams: Promise<{ year?: string }> }) {
   const { year } = await searchParams;
@@ -36,7 +37,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ y
 
   // Six queries in parallel. None of them says "where user_id = me":
   // Row Level Security adds that filter inside Postgres.
-  const [sectionsRes, progressRes, profileRes, hikesRes, segRes, clubsRes, newRes] = await Promise.all([
+  const [sectionsRes, progressRes, profileRes, hikesRes, segRes, clubsRes, newRes, badgesRes] = await Promise.all([
     supabase.from("sections").select("id, slug, name, length_km, club_badge_url").order("id"),
     supabase.from("section_progress").select("section_id, done_km, covered"),
     supabase.from("profiles").select("display_name, share_enabled, share_slug, goal, avatar_path").single(),
@@ -44,7 +45,9 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ y
     supabase.from("hike_segments").select("hike_id, section_id, km, hikes!inner(start_point, end_point)"),
     supabase.from("profile_clubs").select("section_id"),
     supabase.from("hike_new_km").select("hike_id, new_km"),
+    supabase.from("badge_awards").select("section_id, received_on"),
   ]);
+  const badges = new Map((badgesRes.data ?? []).map((b) => [b.section_id as number, b.received_on as string]));
 
   const progress = new Map(((progressRes.data ?? []) as Progress[]).map((p) => [p.section_id, p]));
   const hikes = (hikesRes.data ?? []) as Hike[];
@@ -133,6 +136,14 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ y
               of {Math.round(totalKm)} km hiked · {started} of 9 sections started
               <br />
               <strong>{pct}% of the Bruce Trail</strong>
+              {badges.size > 0 && (
+                <>
+                  {" · "}
+                  <strong className="gold-text">
+                    {badges.size} of 9 {badges.size === 1 ? "badge" : "badges"}
+                  </strong>
+                </>
+              )}
             </p>
           </div>
           {profile?.goal && (
@@ -205,16 +216,36 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ y
             <ul className="badge-grid">
               {sections.map((s) => {
                 const f = s.length_km ? s.done_km / s.length_km : 0;
+                const received = badges.get(s.id) ?? null;
+                const status = badgeStatus(f, !!received);
                 return (
-                  <li key={s.id} className="badge-card">
-                    <BadgeRing kind={s.slug} fraction={f} />
+                  <li
+                    key={s.id}
+                    className={`badge-card${status === "complete" ? " badge-complete" : ""}${status === "received" ? " wb-gold" : ""}`}
+                  >
+                    <BadgeRing kind={s.slug} fraction={f} status={status} />
                     <span className="badge-name">{s.name}</span>
                     {s.home && <span className="tag tag-club">your club</span>}
-                    <span className="mono badge-km">
-                      {km1(s.done_km)} of {s.length_km} km · {Math.round(Math.min(1, f) * 100)}%
-                    </span>
+                    {status === "received" ? (
+                      <span className="badge-earned">End to end badge · {monthYear(received!)}</span>
+                    ) : status === "complete" ? (
+                      <span className="mono badge-km">Section complete · {s.length_km} km</span>
+                    ) : (
+                      <span className="mono badge-km">
+                        {km1(s.done_km)} of {s.length_km} km · {Math.round(Math.min(1, f) * 100)}%
+                      </span>
+                    )}
+                    {status === "complete" && (
+                      <Link href={`/log/${s.slug}`} className="apply-link">
+                        Apply for your badge
+                      </Link>
+                    )}
                     <span className="badge-links">
-                      {s.logHref && <Link href={s.logHref}>Trail log</Link>}
+                      {status === "complete" ? (
+                        <Link href={`/map?s=${s.slug}#badge`}>I&rsquo;ve received it</Link>
+                      ) : (
+                        s.logHref && <Link href={s.logHref}>Trail log</Link>
+                      )}
                       {s.club_badge_url && (
                         <a href={s.club_badge_url} target="_blank" rel="noopener noreferrer">
                           Club badges<span className="sr-only"> for {s.name} (opens in a new tab)</span>

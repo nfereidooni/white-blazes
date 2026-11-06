@@ -22,6 +22,8 @@ export default async function TrailLogPage({ params }: { params: Promise<{ slug:
 
   const [log, viewer] = await Promise.all([getTrailLog(supabase, slug), getViewer(supabase, user)]);
   if (!log) notFound();
+  const { data: award } = await supabase.from("badge_awards").select("received_on").eq("section_id", log.section.id).maybeSingle();
+  const complete = log.doneKm >= log.section.lengthKm * 0.995;
   const { section, rows, gaps, unplaced } = log;
   const pct = Math.round((log.doneKm / section.lengthKm) * 100);
   const today = new Date().toLocaleDateString("en-CA", { month: "long", day: "numeric", year: "numeric" });
@@ -63,6 +65,31 @@ export default async function TrailLogPage({ params }: { params: Promise<{ slug:
               )}
             </div>
           </div>
+
+          {award ? (
+            <p className="log-banner wb-gold no-print">
+              <strong>End to end badge received</strong>{" "}
+              {new Date(`${award.received_on}T12:00:00`).toLocaleDateString("en-CA", { month: "long", year: "numeric" })}.
+            </p>
+          ) : (
+            complete && (
+              <p className="log-banner log-banner-ready no-print">
+                <strong>Section complete.</strong> Print or download this log and send it to the {section.club} to apply for
+                your end to end badge
+                {section.badgeUrl && (
+                  <>
+                    {" "}
+                    (
+                    <a href={section.badgeUrl} target="_blank" rel="noopener noreferrer">
+                      how to apply<span className="sr-only"> (opens in a new tab)</span>
+                    </a>
+                    )
+                  </>
+                )}
+                . When it arrives, <Link href={`/map?s=${section.slug}#badge`}>record it here</Link>.
+              </p>
+            )
+          )}
 
           {log.error && (
             <p className="error" role="alert">

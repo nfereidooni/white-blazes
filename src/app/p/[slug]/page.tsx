@@ -7,7 +7,7 @@ import { Logo } from "@/components/Logo";
 import { Forest } from "@/components/Forest";
 import { Footer } from "@/components/Footer";
 import { Avatar } from "@/components/Avatar";
-import { BadgeRing } from "@/components/Badge";
+import { BadgeRing, badgeStatus } from "@/components/Badge";
 import { TrailMap } from "@/components/TrailMap";
 import { avatarUrl } from "@/lib/avatar";
 import { parseMulti } from "@/lib/gaps";
@@ -16,21 +16,23 @@ import { Ribbon, totals, type SectionRow } from "@/components/TrailProgress";
 
 type Row = { display_name: string | null; section_id: number; section_name: string; length_km: number; done_km: number };
 type Facts = { id: number; slug: string; start_name: string; end_name: string; sights: string | null; club_badge_url: string };
-type Shared = SectionRow & Omit<Facts, "id"> & { covered: [number, number][]; complete: boolean };
+type Shared = SectionRow & Omit<Facts, "id"> & { covered: [number, number][]; complete: boolean; receivedOn: string | null };
 
 // A public page: no sign-in. Visitors can't read anyone's hikes. Three
 // security definer functions hand back only what a share page shows, and
 // only while sharing is on: km per section, covered stretches for the map,
-// and the photo and goal if the owner chose to show them. Section facts are
+// badges received, and the photo and goal if the owner chose to show them. Section facts are
 // public anyway. cache() lets the page and its metadata share the calls.
 const load = cache(async (slug: string) => {
   const supabase = await createClient();
-  const [{ data }, { data: person }, { data: covered }, { data: facts }] = await Promise.all([
+  const [{ data }, { data: person }, { data: covered }, { data: facts }, { data: awards }] = await Promise.all([
     supabase.rpc("shared_progress", { slug }),
     supabase.rpc("shared_profile", { slug }).maybeSingle<{ goal: string | null; avatar_path: string | null }>(),
     supabase.rpc("shared_covered", { slug }),
     supabase.from("sections").select("id, slug, start_name, end_name, sights, club_badge_url").order("id"),
+    supabase.rpc("shared_badges", { slug }),
   ]);
+  const awardBy = new Map(((awards ?? []) as { section_id: number; received_on: string }[]).map((a) => [a.section_id, a.received_on]));
   const rows = (data ?? []) as Row[];
   if (!rows.length) return null;
 
@@ -52,6 +54,7 @@ const load = cache(async (slug: string) => {
       club_badge_url: f?.club_badge_url ?? "",
       covered: coveredBy.get(r.section_id) ?? [],
       complete: done >= length * 0.995,
+      receivedOn: awardBy.get(r.section_id) ?? null,
     };
   });
   return {
@@ -74,12 +77,16 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 }
 
 const km1 = (n: number) => n.toFixed(1);
+const monthYear = (iso: string) => new Date(`${iso}T12:00:00`).toLocaleDateString("en-CA", { month: "short", year: "numeric" });
 
 export default async function SharedProgressPage({ params }: { params: Promise<{ slug: string }> }) {
   const data = await load((await params).slug);
   if (!data) notFound();
   const { totalKm, doneKm, pct, started } = totals(data.sections);
-  const complete = data.sections.filter((s) => s.complete);
+  // Earned badges first, then sections finished but not yet awarded.
+  const complete = [...data.sections.filter((s) => s.receivedOn), ...data.sections.filter((s) => s.complete && !s.receivedOn)];
+  const earned = data.sections.filter((s) => s.receivedOn).length;
+  const finished = data.sections.filter((s) => s.complete).length;
 
   return (
     <div className="page">
@@ -101,11 +108,19 @@ export default async function SharedProgressPage({ params }: { params: Promise<{
           </h1>
           <p className="sub">
             of {Math.round(totalKm)} km · <strong>{pct}% of the Bruce Trail</strong> · {started} of 9 sections started
-            {complete.length > 0 && (
+            {finished > 0 && (
               <>
                 {" · "}
                 <strong>
-                  {complete.length} {complete.length === 1 ? "section" : "sections"} complete
+                  {finished} {finished === 1 ? "section" : "sections"} complete
+                </strong>
+              </>
+            )}
+            {earned > 0 && (
+              <>
+                {" · "}
+                <strong className="gold-text">
+                  {earned} of 9 {earned === 1 ? "badge" : "badges"}
                 </strong>
               </>
             )}
@@ -129,13 +144,15 @@ export default async function SharedProgressPage({ params }: { params: Promise<{
 
         {complete.length > 0 && (
           <section className="card" aria-labelledby="done-h">
-            <h2 id="done-h">Completed sections</h2>
+            <h2 id="done-h">{earned ? "Badges and completed sections" : "Completed sections"}</h2>
             <ul className="done-row">
               {complete.map((s) => (
-                <li key={s.id} className="done-card">
-                  <BadgeRing kind={s.slug} fraction={1} size={96} />
+                <li key={s.id} className={s.receivedOn ? "done-card wb-gold" : "done-card"}>
+                  <BadgeRing kind={s.slug} fraction={1} size={96} status={s.receivedOn ? "received" : "complete"} />
                   <span className="badge-name">{s.name}</span>
-                  <span className="mono badge-km">Section complete · {s.length_km} km</span>
+                  <span className={s.receivedOn ? "badge-earned" : "mono badge-km"}>
+                    {s.receivedOn ? `End to end badge · ${monthYear(s.receivedOn)}` : `Section complete · ${s.length_km} km`}
+                  </span>
                 </li>
               ))}
             </ul>
@@ -170,12 +187,16 @@ export default async function SharedProgressPage({ params }: { params: Promise<{
                 const f = s.length_km ? s.done_km / s.length_km : 0;
                 return (
                   <li key={s.id}>
-                    <BadgeRing kind={s.slug} fraction={f} size={84} />
+                    <BadgeRing kind={s.slug} fraction={f} size={84} status={badgeStatus(f, !!s.receivedOn)} />
                     <div className="sf-body">
                       <div className="sf-head">
                         <h3>
                           {s.name}
-                          {s.complete && <span className="tag tag-club">Section complete</span>}
+                          {s.receivedOn ? (
+                            <span className="tag tag-gold">Badge earned</span>
+                          ) : (
+                            s.complete && <span className="tag tag-club">Section complete</span>
+                          )}
                         </h3>
                         <span className="mono badge-km">
                           {s.complete ? `${s.length_km} km` : `${km1(s.done_km)} of ${s.length_km} km hiked · ${Math.round(f * 100)}%`}
