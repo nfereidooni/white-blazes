@@ -12,7 +12,13 @@ export function Footer() {
   return (
     <footer className="site-footer">
       <div className="support">
-        <p>Love the Bruce Trail?</p>
+        <div className="support-text">
+          <p>Love the Bruce Trail?</p>
+          <p className="support-note">
+            The Bruce Trail Conservancy is a registered Canadian charity (No. 119217578RR0001). Donations and
+            memberships get a charitable tax receipt.
+          </p>
+        </div>
         <div className="support-links">
           <a href={BTC.donate} target="_blank" rel="noopener noreferrer" className="button-support">
             Donate to the Bruce Trail Conservancy
@@ -40,7 +46,7 @@ export function Footer() {
         , available under the Open Database License.
       </p>
       <p className="fineprint footer-legal">
-        © {new Date().getFullYear()} Niki Fereidooni · <Link href="/privacy">Privacy</Link>
+        © {new Date().getFullYear()} Niki Fereidooni · <Link href="/privacy">Privacy policy</Link>
       </p>
     </footer>
   );

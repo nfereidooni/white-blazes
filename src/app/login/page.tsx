@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { LoginForm } from "./LoginForm";
 import { Logo } from "@/components/Logo";
 import { Forest } from "@/components/Forest";
+import { LoginPreview } from "@/components/LoginPreview";
 
 export default async function LoginPage({
   searchParams,
@@ -20,24 +21,28 @@ export default async function LoginPage({
   return (
     <main className="login">
       <Forest />
-      <div className="login-card">
-        <Logo size={22} onLight className="login-logo" />
-        {deleted && (
-          <p className="notice" role="status">
-            Your account and all your hikes have been deleted.
+      <div className="login-layout">
+        <div className="login-card">
+          <Logo size={22} onLight className="login-logo" />
+          {deleted && (
+            <p className="notice" role="status">
+              Your account and all your hikes have been deleted.
+            </p>
+          )}
+          <p className="lede">
+            White Blazes tracks your hikes along the Bruce Trail, from Niagara
+            to Tobermory. Log where you&rsquo;ve hiked and see how much of the
+            trail you&rsquo;ve covered, section by section.
           </p>
-        )}
-        <p className="lede">
-          White Blazes tracks your hikes along the Bruce Trail, from Niagara to Tobermory. Log where you&rsquo;ve
-          hiked and see how much of the trail you&rsquo;ve covered, section by section.
-        </p>
-        <h1>Sign in</h1>
-        <p className="lede">
-          {process.env.NEXT_PUBLIC_EMAIL_SIGNIN === "off"
-            ? "Sign in with your Google account."
-            : "Use Google, or get a sign-in link by email."}
-        </p>
-        <LoginForm error={error} />
+          <h1>Sign in</h1>
+          <p className="lede">
+            {process.env.NEXT_PUBLIC_EMAIL_SIGNIN === "off"
+              ? "Sign in with your Google account."
+              : "Use Google, or get a sign-in link by email."}
+          </p>
+          <LoginForm error={error} />
+        </div>
+        <LoginPreview />
       </div>
     </main>
   );
