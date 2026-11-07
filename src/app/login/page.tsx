@@ -32,7 +32,11 @@ export default async function LoginPage({
           hiked and see how much of the trail you&rsquo;ve covered, section by section.
         </p>
         <h1>Sign in</h1>
-        <p className="lede">Use Google, or get a sign-in link by email.</p>
+        <p className="lede">
+          {process.env.NEXT_PUBLIC_EMAIL_SIGNIN === "off"
+            ? "Sign in with your Google account."
+            : "Use Google, or get a sign-in link by email."}
+        </p>
         <LoginForm error={error} />
       </div>
     </main>
