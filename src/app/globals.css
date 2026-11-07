@@ -605,14 +605,37 @@ a.ribbon-block:hover, a.ribbon-block:focus-visible { outline: 2px solid var(--fo
 /* Signed-out landing: sign in, plus a preview built from the real components */
 .login-layout { position: relative; width: 100%; max-width: 1080px; display: grid; gap: 24px; align-items: start; justify-items: center; }
 @media (min-width: 960px) { .login-layout { grid-template-columns: 420px 1fr; align-items: center; } }
-.preview { position: relative; width: 100%; max-width: 620px; background: var(--paper); border-radius: 16px; padding: 22px 22px 18px; box-shadow: 0 20px 50px rgba(0, 0, 0, 0.25); display: flex; flex-direction: column; gap: 18px; min-width: 0; }
-.preview-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
-.preview-head .tag { margin: 0; }
-.preview-figure { margin: 0; font-size: 14px; color: var(--muted); }
-.preview-figure strong { font-family: var(--font-serif), Georgia, serif; font-weight: 400; font-size: 26px; color: var(--ink); }
-.preview .preview-note { margin-left: auto; }
+.preview { position: relative; width: 100%; max-width: 440px; padding: 14px; border-radius: 18px; background: rgba(247, 245, 238, 0.08); border: 1px solid rgba(247, 245, 238, 0.16); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.preview-caption { margin: 0; display: flex; align-items: center; gap: 8px; font-size: 13px; color: #c5d3bd; }
+.preview-caption .tag { margin: 0; }
+.preview-map { pointer-events: none; user-select: none; }
+.preview-map .map-box-share { height: 230px; border: 0; opacity: 0.92; }
+.preview-map .map-whole, .preview-map .maplibregl-control-container, .preview-map .map-loading-note { display: none; }
+
+/* Cut-outs of the real UI, overlapping the bottom of the map */
+.cutouts { display: grid; grid-template-columns: 1.1fr 1fr; gap: 8px; margin-top: -40px; position: relative; padding: 0 6px; }
+.cutout { background: var(--paper); border-radius: 12px; padding: 10px 12px; box-shadow: 0 10px 24px rgba(0, 0, 0, 0.3); font-size: 12px; color: var(--muted); display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.cutout strong { color: var(--ink); font-size: 13px; }
+.cutout-badge { flex-direction: row; align-items: center; gap: 10px; transform: rotate(-2deg); }
+.cutout-badge div { display: flex; flex-direction: column; }
+.cutout-badge span { color: #6b4a06; font-weight: 600; }
+.cutout-section { transform: rotate(1.5deg); }
+.cutout-bar { position: relative; height: 8px; border-radius: 4px; background: var(--track); overflow: hidden; margin-top: 2px; }
+.cutout-bar i { position: absolute; top: 0; bottom: 0; background: var(--forest-600); }
+.cutout-cal { grid-column: 1 / -1; justify-self: center; flex-direction: row; align-items: center; gap: 14px; transform: rotate(-0.5deg); }
+.cutout-badge span { white-space: nowrap; }
+.cutout-grid { display: flex; gap: 3px; }
+.cutout-grid div { display: grid; gap: 3px; }
+.cutout-grid i { width: 9px; height: 9px; border-radius: 2px; background: #e3e9db; }
+.cutout-grid .l1 { background: #c3d9a5; } .cutout-grid .l2 { background: #8fb46a; } .cutout-grid .l3 { background: #4f7f50; } .cutout-grid .l4 { background: #24452f; }
+@media (min-width: 960px) { .login-layout { grid-template-columns: 420px 440px; justify-content: center; gap: 48px; } }
+
 @media (prefers-reduced-motion: no-preference) {
-  .preview .trail-map { animation: wb-rise 700ms 200ms ease-out both; }
+  .preview-map { animation: wb-rise 700ms 150ms ease-out both; }
+  .cutout { animation: wb-rise 600ms ease-out both; }
+  .cutout-badge { animation-delay: 600ms; }
+  .cutout-section { animation-delay: 750ms; }
+  .cutout-cal { animation-delay: 900ms; }
 }
 @keyframes wb-rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
 .soon-card p.error { color: var(--error); font-weight: 600; }

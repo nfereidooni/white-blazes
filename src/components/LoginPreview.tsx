@@ -1,5 +1,6 @@
 import { totals, type SectionRow } from "@/components/TrailProgress";
 import { TrailMap } from "@/components/TrailMap";
+import { BadgeRing } from "@/components/Badge";
 
 /**
  * What White Blazes looks like, for people who haven't signed in yet.
@@ -21,32 +22,70 @@ const RAW: Demo[] = [
 ];
 const SECTIONS: Demo[] = RAW.map((s) => ({ ...s, done_km: s.covered.reduce((a, [x, y]) => a + y - x, 0) }));
 
+// A few weeks of the calendar for the cut-out: 0 = no hike, 1 to 4 = shade.
+const WEEKS = [
+  [0, 0, 0, 0, 0, 2, 0],
+  [0, 0, 0, 0, 0, 0, 3],
+  [0, 0, 0, 0, 0, 1, 0],
+  [0, 0, 0, 0, 0, 0, 0],
+  [0, 0, 0, 0, 0, 4, 2],
+  [0, 0, 0, 0, 0, 0, 1],
+  [0, 0, 0, 0, 0, 3, 0],
+  [0, 0, 0, 0, 0, 2, 0],
+  [0, 0, 0, 0, 0, 0, 0],
+  [0, 0, 0, 0, 0, 4, 0],
+];
+
 export function LoginPreview() {
-  const { totalKm, doneKm, pct } = totals(SECTIONS);
+  const { doneKm, pct } = totals(SECTIONS);
+  const toronto = SECTIONS[2];
   return (
     <section className="preview" aria-label="Example of what White Blazes shows">
-      <div className="preview-head">
-        <span className="tag tag-soon">Example hiker</span>
-        <p className="preview-figure">
-          <strong>{doneKm.toFixed(1)}</strong> of {Math.round(totalKm)} km · {pct}% of the trail
-        </p>
+      <p className="preview-caption">
+        <span className="tag tag-soon">Example</span> {doneKm.toFixed(0)} km hiked · {pct}% of the trail
+      </p>
+      <div className="preview-map" inert>
+        <TrailMap
+          sections={SECTIONS.map(({ id, slug, length_km, covered }) => ({ id, slug, lengthKm: length_km, covered }))}
+          selectedId={null}
+          gap={null}
+          interactive={false}
+        />
       </div>
-      <TrailMap
-        sections={SECTIONS.map(({ id, slug, length_km, covered }) => ({ id, slug, lengthKm: length_km, covered }))}
-        selectedId={null}
-        gap={null}
-        interactive={false}
-      />
-      <div className="map-legend">
-        <span>
-          <i className="key key-hiked" />
-          Hiked
-        </span>
-        <span>
-          <i className="key key-not" />
-          Not yet
-        </span>
-        <span className="preview-note">Every stretch you&rsquo;ve hiked, Niagara to Tobermory</span>
+
+      <div className="cutouts" aria-hidden="true">
+        <div className="cutout cutout-badge wb-gold">
+          <BadgeRing kind="niagara" fraction={1} size={52} status="received" />
+          <div>
+            <strong>Niagara</strong>
+            <span>Badge earned</span>
+          </div>
+        </div>
+
+        <div className="cutout cutout-section">
+          <strong>{toronto.name}</strong>
+          <span className="mono">
+            {toronto.done_km.toFixed(1)} of {toronto.length_km} km
+          </span>
+          <div className="cutout-bar">
+            {toronto.covered.map(([a, b]) => (
+              <i key={a} style={{ left: `${(a / toronto.length_km) * 100}%`, width: `${((b - a) / toronto.length_km) * 100}%` }} />
+            ))}
+          </div>
+        </div>
+
+        <div className="cutout cutout-cal">
+          <strong>Hiking days</strong>
+          <div className="cutout-grid">
+            {WEEKS.map((w, i) => (
+              <div key={i}>
+                {w.map((v, j) => (
+                  <i key={j} className={v ? `l${v}` : undefined} />
+                ))}
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
     </section>
   );
