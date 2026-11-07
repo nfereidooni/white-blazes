@@ -6,6 +6,7 @@ import { avatarUrl } from "@/lib/avatar";
 import { closestGap, parseMulti, parseRange, type Segment } from "@/lib/gaps";
 import { SiteHeader } from "@/components/SiteHeader";
 import { Footer } from "@/components/Footer";
+import { GetStarted } from "@/components/GetStarted";
 import { Ribbon, totals, type SectionRow } from "@/components/TrailProgress";
 import { BadgeRing, badgeStatus } from "@/components/Badge";
 import { HikeCalendar, CalendarLegend, type CalendarDays } from "@/components/HikeCalendar";
@@ -164,6 +165,10 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ y
       </SiteHeader>
 
       <main className="content">
+        {hikes.length === 0 && (
+          <GetStarted />
+        )}
+
         <section className="card" aria-labelledby="ribbon-h">
           <div className="card-head">
             <h2 id="ribbon-h">Your progress, end to end</h2>

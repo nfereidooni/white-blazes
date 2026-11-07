@@ -90,15 +90,22 @@ export default async function MapPage({
         ),
       supabase.from("profile_clubs").select("section_id"),
       supabase.from("badge_awards").select("section_id, received_on"),
-  ]);
+    ]);
 
   const sections = (sectionsRes.data ?? []) as Section[];
   const progress = new Map(
     (progressRes.data ?? []).map((p) => [p.section_id as number, p]),
   );
   const segRows = (segRes.data ?? []) as unknown as SegRow[];
-  const badges = new Map((badgesRes.data ?? []).map((b) => [b.section_id as number, b.received_on as string]));
-  const today = new Date().toLocaleDateString("en-CA", { timeZone: "America/Toronto" });
+  const badges = new Map(
+    (badgesRes.data ?? []).map((b) => [
+      b.section_id as number,
+      b.received_on as string,
+    ]),
+  );
+  const today = new Date().toLocaleDateString("en-CA", {
+    timeZone: "America/Toronto",
+  });
   const homeClubs = new Set(
     (clubsRes.data ?? []).map((r) => r.section_id as number),
   );
@@ -162,7 +169,28 @@ export default async function MapPage({
         />
       </SiteHeader>
 
-      <main className="content content-inner">
+      <main className="content map-content">
+        <nav className="section-chips map-chips" aria-label="Choose a section">
+          <Link
+            href="/map"
+            scroll={false}
+            className={chosen ? "chip" : "chip chip-on"}
+            aria-current={chosen ? undefined : "true"}
+          >
+            Whole trail
+          </Link>
+          {sections.map((s) => (
+            <Link
+              key={s.id}
+              href={`/map?s=${s.slug}`}
+              scroll={false}
+              className={s.id === chosen?.id ? "chip chip-on" : "chip"}
+              aria-current={s.id === chosen?.id ? "true" : undefined}
+            >
+              {s.name}
+            </Link>
+          ))}
+        </nav>
         <div className="columns map-columns">
           <section className="card map-card" aria-label="Trail map">
             <div className="map-legend">
@@ -213,28 +241,6 @@ export default async function MapPage({
           </section>
 
           <aside className="stack" aria-labelledby={chosen ? "sec-h" : "all-h"}>
-            <nav className="section-chips wrap" aria-label="Choose a section">
-              <Link
-                href="/map"
-                scroll={false}
-                className={chosen ? "chip" : "chip chip-on"}
-                aria-current={chosen ? undefined : "true"}
-              >
-                Whole trail
-              </Link>
-              {sections.map((s) => (
-                <Link
-                  key={s.id}
-                  href={`/map?s=${s.slug}`}
-                  scroll={false}
-                  className={s.id === chosen?.id ? "chip chip-on" : "chip"}
-                  aria-current={s.id === chosen?.id ? "true" : undefined}
-                >
-                  {s.name}
-                </Link>
-              ))}
-            </nav>
-
             {!chosen && (
               <section className="card section-panel">
                 <h2 id="all-h">The whole trail</h2>

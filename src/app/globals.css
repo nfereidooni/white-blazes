@@ -571,3 +571,21 @@ a.ribbon-block:hover, a.ribbon-block:focus-visible { outline: 2px solid var(--fo
 .ribbon-key .key { width: 14px; height: 10px; border-radius: 3px; box-shadow: none; }
 .ribbon-key .key-hiked { background: var(--forest-600); }
 .ribbon-key .key-not { background: var(--track); }
+
+/* Placement choice: a radio circle in each pill, so it reads as "pick one". */
+.field-lede { margin: -2px 0 8px; }
+.segmented-radio label { gap: 8px; padding-left: 12px; }
+.segmented-radio label::before { content: ""; width: 14px; height: 14px; border-radius: 50%; border: 2px solid #9aa892; box-sizing: border-box; flex: none; }
+.segmented-radio label:has(input:checked)::before { border: 4px solid var(--cream); background: var(--forest-700); }
+
+/* Home: get started, shown until the first hike */
+.start-steps { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
+.start-steps li { display: flex; flex-direction: column; gap: 6px; padding: 16px; border: 1px solid var(--line); border-radius: 12px; background: var(--ground); }
+.start-steps h3 { margin: 0; font-size: 16px; }
+.start-steps p { margin: 0; font-size: 14px; line-height: 1.5; color: var(--muted); flex: 1; }
+.start-steps a { font-weight: 600; }
+
+/* Map: section chips in one row under the banner, above the map */
+.map-content { margin-top: 20px; }
+.map-chips { margin-bottom: -8px; }
+@media (min-width: 720px) { .map-chips { flex-wrap: wrap; overflow: visible; } }

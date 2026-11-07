@@ -32,10 +32,10 @@ export type HikeValues = {
 // Ways to say where a hike went. They all end up as km ranges in
 // hike_segments, one per section, so a hike can cross section boundaries.
 const BASE_PLACEMENTS = [
-  { value: "map", label: "Map" },
-  { value: "coords", label: "Coordinates" },
-  { value: "km", label: "Km range" },
-  { value: "skip", label: "Not yet" },
+  { value: "map", label: "Pick on a map" },
+  { value: "coords", label: "Paste coordinates" },
+  { value: "km", label: "Enter km" },
+  { value: "skip", label: "Skip for now" },
 ];
 
 const HINTS: Record<string, string> = {
@@ -111,7 +111,8 @@ export function HikeForm({
       {placing && (
         <fieldset className="field placement">
           <legend>Where on the trail?</legend>
-          <div className="segmented">
+          <p className="hint field-lede">This is how your km get counted. Choose one way to mark it:</p>
+          <div className="segmented segmented-radio">
             {placements.map((p) => (
               <label key={p.value}>
                 <input
