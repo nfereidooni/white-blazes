@@ -115,7 +115,7 @@ export default function PrivacyPage() {
           <ul>
             <li>
               <strong>Supabase</strong> stores your data and handles sign-in.
-              The database is in Canada (Montréal).
+              The database is in the United States.
             </li>
             <li>
               <strong>Vercel</strong> hosts the website. Your requests pass
