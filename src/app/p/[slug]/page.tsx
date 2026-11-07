@@ -136,9 +136,13 @@ export default async function SharedProgressPage({ params }: { params: Promise<{
       <main className="content">
         <section className="card" aria-labelledby="ribbon-h">
           <div className="card-head">
-            <h2 id="ribbon-h">The whole trail</h2>
-            <span className="mono">Niagara to Tobermory</span>
+            <h2 id="ribbon-h">Progress, end to end</h2>
+            <span className="mono">{Math.round(totalKm)} km</span>
           </div>
+          <p className="muted card-lede">
+            The Bruce Trail from south to north. Each block is one of its nine sections, sized by length. Green shows where{" "}
+            {data.name} has hiked.
+          </p>
           <Ribbon sections={data.sections} />
         </section>
 

@@ -56,12 +56,13 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ y
   const withHikes = new Set(hikes.map((h) => h.section_id));
 
   const raw = (sectionsRes.data ?? []) as Section[];
-  const sections: (SectionRow & { slug: string; home: boolean })[] = raw.map((s) => {
+  const sections: (SectionRow & { slug: string; home: boolean; covered: [number, number][] })[] = raw.map((s) => {
     const done = Number(progress.get(s.id)?.done_km ?? 0);
     return {
       ...s,
       length_km: Number(s.length_km),
       done_km: done,
+      covered: parseMulti(progress.get(s.id)?.covered),
       home: homeClubs.has(s.id),
       logHref: done > 0 || withHikes.has(s.id) ? `/log/${s.slug}` : undefined,
     };
@@ -165,10 +166,14 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ y
       <main className="content">
         <section className="card" aria-labelledby="ribbon-h">
           <div className="card-head">
-            <h2 id="ribbon-h">The whole trail</h2>
-            <span className="mono">9 sections · {Math.round(totalKm)} km</span>
+            <h2 id="ribbon-h">Your progress, end to end</h2>
+            <span className="mono">{Math.round(totalKm)} km</span>
           </div>
-          <Ribbon sections={sections} />
+          <p className="muted card-lede">
+            The Bruce Trail from south to north. Each block is one of its nine sections, sized by length. Green shows where
+            you&rsquo;ve hiked. Select a block to see it on the map.
+          </p>
+          <Ribbon sections={sections} linkToMap />
         </section>
 
         <section className="card" aria-labelledby="cal-h">

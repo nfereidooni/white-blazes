@@ -63,8 +63,7 @@ h1, h2 { font-family: var(--font-serif), Georgia, serif; font-weight: 400; margi
 .card h2 { font-size: 24px; }
 .card-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; }
 .ribbon { display: flex; gap: 4px; height: 18px; }
-.ribbon > div { background: var(--track); border-radius: 4px; overflow: hidden; min-width: 0; }
-.ribbon > div > div, .meter > div { height: 100%; background: var(--forest-600); }
+.meter > div { height: 100%; background: var(--forest-600); }
 .ends { display: flex; justify-content: space-between; color: var(--muted); font-size: 12px; }
 
 .columns { display: flex; flex-wrap: wrap; gap: 24px; align-items: flex-start; }
@@ -557,3 +556,18 @@ button.avatar-link { padding: 0; border: 0; background: transparent; cursor: poi
 .login-form button.google-button:hover { background: #f4f6f0; }
 .login .or { display: flex; align-items: center; gap: 12px; margin: 14px 0 2px; color: var(--muted, #6b7466); font-size: 14px; }
 .login .or::before, .login .or::after { content: ""; flex: 1; height: 1px; background: #d9dfd0; }
+
+/* Whole-trail ribbon: one block per section, hiked stretches drawn in place. */
+.ribbon-block { position: relative; display: block; background: var(--track); border-radius: 4px; overflow: hidden; min-width: 0; }
+.ribbon-block i { position: absolute; top: 0; bottom: 0; background: var(--forest-600); }
+a.ribbon-block:hover, a.ribbon-block:focus-visible { outline: 2px solid var(--forest-700); outline-offset: 1px; }
+.ribbon-names { display: flex; gap: 4px; margin-top: 6px; font-size: 12px; color: var(--muted); }
+.ribbon-names span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ribbon-key { display: flex; gap: 16px; margin-top: 10px; font-size: 13px; color: var(--muted); }
+.ribbon-key span { display: inline-flex; align-items: center; gap: 6px; }
+.ribbon { height: 24px; }
+.ribbon-ends { display: none; margin-top: 6px; }
+@media (max-width: 640px) { .ribbon-names { display: none; } .ribbon-ends { display: flex; } }
+.ribbon-key .key { width: 14px; height: 10px; border-radius: 3px; box-shadow: none; }
+.ribbon-key .key-hiked { background: var(--forest-600); }
+.ribbon-key .key-not { background: var(--track); }
