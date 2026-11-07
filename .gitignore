@@ -44,3 +44,6 @@ next-env.d.ts
 # personal seed data (keeps your own hikes out of git)
 supabase/seeds/*
 !supabase/seeds/README.md
+
+# Personal build notes, kept out of the public repo
+notes/

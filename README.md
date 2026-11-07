@@ -18,8 +18,6 @@ npm run db:reset   # apply migrations and demo data
 npm run dev
 ```
 
-Notes on how it's built are in [`docs/`](docs/).
-
 ## License
 
 The code is under the [MIT License](LICENSE).
