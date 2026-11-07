@@ -14,10 +14,7 @@ export function Footer() {
       <div className="support">
         <div className="support-text">
           <p>Love the Bruce Trail?</p>
-          <p className="support-note">
-            The Bruce Trail Conservancy is a registered Canadian charity (No. 119217578RR0001). Donations and
-            memberships get a charitable tax receipt.
-          </p>
+          <p className="support-note">A registered Canadian charity. Donations get a tax receipt.</p>
         </div>
         <div className="support-links">
           <a href={BTC.donate} target="_blank" rel="noopener noreferrer" className="button-support">
