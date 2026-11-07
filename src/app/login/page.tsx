@@ -8,7 +8,7 @@ import { LoginPreview } from "@/components/LoginPreview";
 export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string; deleted?: string }>;
+  searchParams: Promise<{ error?: string; deleted?: string; detail?: string }>;
 }) {
   const supabase = await createClient();
   const {
@@ -16,7 +16,7 @@ export default async function LoginPage({
   } = await supabase.auth.getUser();
   if (user) redirect("/");
 
-  const { error, deleted } = await searchParams;
+  const { error, deleted, detail } = await searchParams;
 
   return (
     <main className="login">
@@ -41,6 +41,7 @@ export default async function LoginPage({
               : "Use Google, or get a sign-in link by email."}
           </p>
           <LoginForm error={error} />
+        {detail && <p className="hint">Details: {detail}</p>}
         </div>
         <LoginPreview />
       </div>

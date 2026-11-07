@@ -18,13 +18,21 @@ export async function GET(request: NextRequest) {
 
   const supabase = await createClient();
 
-  if (code) {
+  // If Google or Supabase refused, they say why in error_description.
+  let reason = searchParams.get("error_description") ?? searchParams.get("error");
+
+  if (!reason && code) {
     const { error } = await supabase.auth.exchangeCodeForSession(code);
     if (!error) return NextResponse.redirect(`${origin}/`);
-  } else if (tokenHash && type) {
+    reason = error.message;
+  } else if (!reason && tokenHash && type) {
     const { error } = await supabase.auth.verifyOtp({ token_hash: tokenHash, type });
     if (!error) return NextResponse.redirect(`${origin}/`);
+    reason = error.message;
   }
 
-  return NextResponse.redirect(`${origin}/login?error=link`);
+  // Shows in Vercel's logs, and on the login page so it can be reported.
+  console.error("Sign-in failed:", reason ?? "no code in the link");
+  const detail = reason ? `&detail=${encodeURIComponent(reason.slice(0, 200))}` : "";
+  return NextResponse.redirect(`${origin}/login?error=link${detail}`);
 }
