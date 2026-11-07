@@ -606,32 +606,13 @@ a.ribbon-block:hover, a.ribbon-block:focus-visible { outline: 2px solid var(--fo
 .login-layout { position: relative; width: 100%; max-width: 1080px; display: grid; gap: 24px; align-items: start; justify-items: center; }
 @media (min-width: 960px) { .login-layout { grid-template-columns: 420px 1fr; align-items: center; } }
 .preview { position: relative; width: 100%; max-width: 620px; background: var(--paper); border-radius: 16px; padding: 22px 22px 18px; box-shadow: 0 20px 50px rgba(0, 0, 0, 0.25); display: flex; flex-direction: column; gap: 18px; min-width: 0; }
-.preview h2 { margin: 0 0 8px; font-size: 15px; font-family: var(--font-sans), sans-serif; font-weight: 600; }
 .preview-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
 .preview-head .tag { margin: 0; }
 .preview-figure { margin: 0; font-size: 14px; color: var(--muted); }
 .preview-figure strong { font-family: var(--font-serif), Georgia, serif; font-weight: 400; font-size: 26px; color: var(--ink); }
-.preview .ribbon-key, .preview .ribbon-names { display: none; }
-.preview .ribbon-ends { display: flex; }
-.preview-cal .calendar-scroll { overflow: hidden; }
-.preview-badges { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
-.preview-badges .badge-card { padding: 12px 6px 10px; gap: 4px; }
-.preview-badges .badge-name { font-size: 13px; }
-.preview-badges .badge-km, .preview-badges .badge-earned { font-size: 11px; }
-
-/* Light motion: stretches fill in, the calendar rises, badges arrive in turn. */
+.preview .preview-note { margin-left: auto; }
 @media (prefers-reduced-motion: no-preference) {
-  .preview .ribbon-block i { transform-origin: left; animation: wb-fill 900ms cubic-bezier(.2,.7,.2,1) both; }
-  .preview .ribbon-block:nth-child(2) i { animation-delay: 150ms; }
-  .preview .ribbon-block:nth-child(3) i { animation-delay: 300ms; }
-  .preview .ribbon-block:nth-child(4) i { animation-delay: 450ms; }
-  .preview .ribbon-block:nth-child(6) i { animation-delay: 600ms; }
-  .preview .ribbon-block:nth-child(9) i { animation-delay: 750ms; }
-  .preview-cal .calendar { animation: wb-rise 700ms 500ms ease-out both; }
-  .preview-badges li { animation: wb-rise 600ms ease-out both; }
-  .preview-badges li:nth-child(1) { animation-delay: 1000ms; }
-  .preview-badges li:nth-child(2) { animation-delay: 1150ms; }
-  .preview-badges li:nth-child(3) { animation-delay: 1300ms; }
+  .preview .trail-map { animation: wb-rise 700ms 200ms ease-out both; }
 }
-@keyframes wb-fill { from { transform: scaleX(0); } to { transform: scaleX(1); } }
 @keyframes wb-rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+.soon-card p.error { color: var(--error); font-weight: 600; }

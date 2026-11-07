@@ -4,7 +4,7 @@ import { setStravaSyncList } from "./actions-sync";
 // Sync needs Strava's approval to work for more than 10 people, so the note
 // gives no date. The button records interest on your profile; nothing else
 // is collected, since we already have your email from sign-in.
-export async function StravaSyncNote() {
+export async function StravaSyncNote({ failed = false }: { failed?: boolean }) {
   const supabase = await createClient();
   const { data } = await supabase.from("profiles").select("wants_strava_sync").maybeSingle();
   const onList = !!data?.wants_strava_sync;
@@ -22,6 +22,11 @@ export async function StravaSyncNote() {
         For now, import your Strava archive to bring in all your past hikes at once. Do it again any time to add new
         ones.
       </p>
+      {failed && (
+        <p className="error" role="alert">
+          That didn&rsquo;t save. Try again in a moment.
+        </p>
+      )}
       <form action={setStravaSyncList} className="sync-list">
         <input type="hidden" name="on" value={onList ? "false" : "true"} />
         {onList ? (
