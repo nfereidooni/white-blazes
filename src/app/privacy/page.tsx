@@ -34,7 +34,8 @@ export default function PrivacyPage() {
           <h2>What we store</h2>
           <ul>
             <li>
-              <strong>Your email address</strong>, to send you sign-in links.
+              <strong>Your email address</strong>, to sign you in. If you sign in with Google, we also get the name
+              on your Google account, which becomes your display name until you change it.
             </li>
             <li>
               <strong>Your hikes</strong>: date, name, distance, which stretches of the trail they covered (as km ranges),
@@ -43,6 +44,10 @@ export default function PrivacyPage() {
             <li>
               <strong>Your profile</strong>: display name, goal, home clubs, gap setting and, if you add one, a profile
               photo.
+            </li>
+            <li>
+              <strong>Whether you asked to hear about Strava sync.</strong> If you did, we&rsquo;ll email you once
+              when it&rsquo;s ready. You can leave the list on the import page at any time.
             </li>
           </ul>
 
@@ -54,7 +59,7 @@ export default function PrivacyPage() {
               your device.
             </li>
             <li>
-              <strong>Passwords.</strong> There aren&rsquo;t any; you sign in with an emailed link.
+              <strong>Passwords.</strong> There aren&rsquo;t any. You sign in with Google or an emailed link.
             </li>
             <li>
               <strong>Tracking.</strong> No advertising, analytics or tracking cookies. The only cookies keep you signed in.

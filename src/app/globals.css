@@ -595,3 +595,6 @@ a.ribbon-block:hover, a.ribbon-block:focus-visible { outline: 2px solid var(--fo
 .soon-card h2 { display: flex; align-items: center; gap: 10px; margin: 0 0 6px; font-size: 18px; }
 .soon-card p { margin: 6px 0 0; font-size: 14px; line-height: 1.55; color: var(--muted); }
 .tag-soon { color: var(--forest-700); background: #e3ebd9; }
+.sync-list { margin-top: 12px; }
+.sync-list p { margin: 0; font-size: 14px; color: var(--ink); }
+.sync-list .link-button { min-height: 0; font-size: 14px; }
