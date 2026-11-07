@@ -589,3 +589,9 @@ a.ribbon-block:hover, a.ribbon-block:focus-visible { outline: 2px solid var(--fo
 .map-content { margin-top: 20px; }
 .map-chips { margin-bottom: -8px; }
 @media (min-width: 720px) { .map-chips { flex-wrap: wrap; overflow: visible; } }
+
+/* Import page: Strava sync note */
+.soon-card { margin-top: 28px; padding: 18px 20px; border: 1px dashed #b9c4ad; border-radius: 12px; background: var(--ground); }
+.soon-card h2 { display: flex; align-items: center; gap: 10px; margin: 0 0 6px; font-size: 18px; }
+.soon-card p { margin: 6px 0 0; font-size: 14px; line-height: 1.55; color: var(--muted); }
+.tag-soon { color: var(--forest-700); background: #e3ebd9; }
